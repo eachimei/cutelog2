@@ -10,14 +10,17 @@ import qtpy
 
 
 def _fail_with_message(message):
-    """gui_scripts entry points have no console, so a bare sys.exit(str) is invisible."""
-    try:
-        from qtpy.QtWidgets import QApplication, QMessageBox
-        if QApplication.instance() is None:
-            QApplication(sys.argv)
-        QMessageBox.critical(None, "cutelog: incompatible Qt binding", message)
-    except Exception:
-        pass  # whatever got imported can't even show a dialog; fall through to sys.exit
+    """gui_scripts entry points have no console, so a bare sys.exit(str) is invisible.
+
+    This path only runs when Qt's own binding selection is already broken, so don't
+    route the error through Qt itself (a mismatched/mixed binding can crash showing
+    a QMessageBox instead of raising a catchable Python exception).
+    """
+    if sys.platform == 'win32':
+        import ctypes
+        MB_ICONERROR = 0x10
+        ctypes.windll.user32.MessageBoxW(0, message, "cutelog: incompatible Qt binding",
+                                         MB_ICONERROR)
     sys.exit(message)
 
 
