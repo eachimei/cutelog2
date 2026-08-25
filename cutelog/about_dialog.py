@@ -1,8 +1,8 @@
-# from qtpy.uic import loadUi
 from qtpy.QtWidgets import QDialog
+from qtpy.uic import loadUi
 
 from .config import CONFIG
-from .utils import loadUi
+from .resources_loader import get_ui_path
 
 
 class AboutDialog(QDialog):
@@ -11,5 +11,5 @@ class AboutDialog(QDialog):
         self.setupUi()
 
     def setupUi(self):
-        self.ui = loadUi(CONFIG.get_ui_qfile("about_dialog.ui"), baseinstance=self)
+        self.ui = loadUi(get_ui_path("about_dialog.ui"), baseinstance=self)
         self.nameLabel.setText(CONFIG.full_name)

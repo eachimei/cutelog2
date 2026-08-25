@@ -1,1 +1,6 @@
-prune cutelog/resources/
+graft share
+graft tests
+recursive-include cutelog/resources *
+include README.rst
+include README.md
+global-exclude __pycache__ *.py[cod]

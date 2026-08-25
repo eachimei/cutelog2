@@ -1,13 +1,19 @@
 import enum
 import logging
-import os
 import sys
 from collections import namedtuple
-from distutils.version import StrictVersion
+from importlib.metadata import PackageNotFoundError
+from importlib.metadata import version as get_version
 
-from pkg_resources import get_distribution, resource_filename
-from qtpy import QT_VERSION
-from qtpy.QtCore import QCoreApplication, QFile, QObject, QSettings, Qt, Signal, QCommandLineParser, QCommandLineOption, QStandardPaths
+from qtpy.QtCore import (
+    QCommandLineOption,
+    QCommandLineParser,
+    QCoreApplication,
+    QObject,
+    QSettings,
+    QStandardPaths,
+    Signal,
+)
 
 if sys.platform == 'win':
     DEFAULT_FONT = 'MS Shell Dlg 2'
@@ -17,24 +23,16 @@ else:
     DEFAULT_FONT = 'Sans'
 
 try:
-    import msgpack
+    import msgpack  # noqa: F401
     MSGPACK_SUPPORT = True
 except ImportError:
     MSGPACK_SUPPORT = False
 
 try:
-    import cbor
+    import cbor2  # noqa: F401
     CBOR_SUPPORT = True
 except ImportError:
     CBOR_SUPPORT = False
-
-
-# @Future: when Qt 5.6 becomes standard, remove this:
-QT_VER = QT_VERSION.split('.')
-if QT_VER[0] == '5' and int(QT_VER[1]) < 6:
-    QT55_COMPAT = True
-else:
-    QT55_COMPAT = False
 
 
 # Maybe there should be one common enum with all options instead of
@@ -106,13 +104,12 @@ class Config(QObject):
             self.log.setLevel(99)
         self.log.debug('Initializing')
         self.qsettings = QSettings()
-        self.qsettings.setIniCodec('UTF-8')
 
         self.options = None
         self.option_spec = self.load_option_spec()
         self.options = self.load_options()
-        self.full_name = "{} {}".format(QCoreApplication.applicationName(),
-                                        QCoreApplication.applicationVersion())
+        self.full_name = (f"{QCoreApplication.applicationName()} "
+                          f"{QCoreApplication.applicationVersion()}")
 
         # options that need fast access are also defined as attributes, which
         # are updated by calling update_attributes()
@@ -125,7 +122,7 @@ class Config(QObject):
         self.update_attributes()
 
     def post_init(self):
-        running_version = StrictVersion(QCoreApplication.applicationVersion())
+        running_version = QCoreApplication.applicationVersion()
         config_version = self.options['cutelog_version']
         if config_version == "" or config_version != running_version:
             self.save_running_version()
@@ -134,14 +131,14 @@ class Config(QObject):
         # self.log.debug('Getting "{}"'.format(name))
         value = self.options.get(name)
         if value is None:
-            raise Exception('No option with name "{}"'.format(name))
+            raise Exception(f'No option with name "{name}"')
         # self.log.debug('Returning "{}"'.format(value))
         return value
 
     def __setitem__(self, name, value):
         # self.log.debug('Setting "{}"'.format(name))
         if name not in self.options:
-            raise Exception('No option with name "{}"'.format(name))
+            raise Exception(f'No option with name "{name}"')
         self.options[name] = value
 
     def set_option(self, name, value):
@@ -155,30 +152,15 @@ class Config(QObject):
         self.update_attributes(overrides)
 
     @staticmethod
-    def get_resource_path(name, directory='ui'):
-        data_dir = resource_filename('cutelog', directory)
-        path = os.path.join(data_dir, name)
-        if not os.path.exists(path):
-            raise FileNotFoundError('Resource file not found in this path: "{}"'.format(path))
-        return path
-
-    def get_ui_qfile(self, name):
-        file = QFile(':/ui/{}'.format(name))
-        if not file.exists():
-            raise FileNotFoundError('ui file not found: ":/ui/{}"'.format(name))
-        file.open(QFile.ReadOnly)
-        return file
-
-    @staticmethod
     def get_data_path():
-        return QStandardPaths.writableLocation(QStandardPaths.AppDataLocation)
+        return QStandardPaths.writableLocation(QStandardPaths.StandardLocation.AppDataLocation)
 
     @property
     def listen_address(self):
         host = self['listen_host']
         port = self['listen_port']
         if host is None or port is None:
-            raise Exception('Listen host or port not in options: "{}:{}"'.format(host, port))
+            raise Exception(f'Listen host or port not in options: "{host}:{port}"')
         return (host, port)
 
     def load_option_spec(self):
@@ -194,17 +176,17 @@ class Config(QObject):
         self.qsettings.beginGroup('Configuration')
         for option in self.option_spec:
             value = self.qsettings.value(option.name, option.default)
-            if option.type == bool:
+            if option.type is bool:
                 value = str(value).lower()  # needed because QSettings stores bools as strings
-                value = True if value == "true" or value is True else False
-            elif option.type == int and value is None:
+                value = value == "true" or value is True
+            elif option.type is int and value is None:
                 value = 0  # workaround for bug PYSIDE-820
             else:
                 try:
                     value = option.type(value)
                 except Exception:
-                    self.log.warn('Could not parse value "{}" for option "{}", falling back to the '
-                                  'default value "{}"'.format(value, option.name, option.default))
+                    self.log.warning(f'Could not parse value "{value}" for option "{option.name}", '
+                                     f'falling back to the default value "{option.default}"')
                     value = option.default
             options[option.name] = value
         self.qsettings.endGroup()
@@ -224,7 +206,8 @@ class Config(QObject):
 
         self.benchmark_interval = options.get('benchmark_interval', self.benchmark_interval)
         self.logger_table_font = options.get('logger_table_font', self.logger_table_font)
-        self.logger_table_font_size = options.get('logger_table_font_size', self.logger_table_font_size)
+        self.logger_table_font_size = options.get('logger_table_font_size',
+                                                  self.logger_table_font_size)
         self.logger_row_height = options.get('logger_row_height', self.logger_row_height)
         self.set_logging_level(options.get('console_logging_level', ROOT_LOG.level))
 
@@ -265,7 +248,7 @@ class Config(QObject):
         return result
 
     def save_levels_preset(self, name, levels):
-        self.log.debug('Saving levels preset "{}"'.format(name))
+        self.log.debug(f'Saving levels preset "{name}"')
         s = self.qsettings
         s.beginGroup('Levels_Presets')
         s.beginWriteArray(name, len(levels))
@@ -279,7 +262,7 @@ class Config(QObject):
 
     def load_levels_preset(self, name):
         from .log_levels import LogLevel
-        self.log.debug('Loading levels preset "{}"'.format(name))
+        self.log.debug(f'Loading levels preset "{name}"')
         s = self.qsettings
         if name not in self.get_levels_presets():
             return None
@@ -307,7 +290,7 @@ class Config(QObject):
         return result
 
     def save_header_preset(self, name, columns):
-        self.log.debug('Saving header preset "{}"'.format(name))
+        self.log.debug(f'Saving header preset "{name}"')
         s = self.qsettings
         s.beginGroup('Header_Presets')
         s.beginWriteArray(name, len(columns))
@@ -324,7 +307,7 @@ class Config(QObject):
 
     def load_header_preset(self, name):
         from .logger_table_header import Column
-        self.log.debug('Loading header preset "{}"'.format(name))
+        self.log.debug(f'Loading header preset "{name}"')
         s = self.qsettings
         if name not in self.get_header_presets():
             return None
@@ -361,7 +344,7 @@ class Config(QObject):
 
     def save_running_version(self):
         version = QCoreApplication.applicationVersion()
-        self.log.debug("Updating the config version to {}".format(version))
+        self.log.debug(f"Updating the config version to {version}")
         s = self.qsettings
         s.beginGroup('Configuration')
         s.setValue('cutelog_version', version)
@@ -378,10 +361,11 @@ def init_qt_info():
     QCoreApplication.setOrganizationName('busimus')
     QCoreApplication.setOrganizationDomain('busz.me')
     QCoreApplication.setApplicationName('cutelog')
-    version = get_distribution(QCoreApplication.applicationName()).version
+    try:
+        version = get_version(QCoreApplication.applicationName())
+    except PackageNotFoundError:
+        version = '0.0.0'
     QCoreApplication.setApplicationVersion(version)
-    if not QT55_COMPAT:  # this attribute was introduced in Qt 5.6
-        QCoreApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
 
 
 def init_logging():
@@ -406,20 +390,21 @@ def parse_cmdline(log):
     parser.addHelpOption()
     parser.addVersionOption()
     parser.addPositionalArgument('logfiles', 'Log files to load', '[logfiles...]')
-    spec = list(filter(lambda o: o[0] not in ('default_levels_preset', 'default_header_preset', 'cutelog_version'), OPTION_SPEC))
+    excluded = ('default_levels_preset', 'default_header_preset', 'cutelog_version')
+    spec = [o for o in OPTION_SPEC if o[0] not in excluded]
     for option in spec:
-        if option[0] in ('default_levels_preset', 'default_header_preset', 'cutelog_version'):
-            continue
-        qoption = QCommandLineOption([option[0]], 'Default: {}'.format(option[2]), option[1].__name__)
+        qoption = QCommandLineOption([option[0]], f'Default: {option[2]}', option[1].__name__)
         parser.addOption(qoption)
     parser.process(sys.argv)
 
     overrides = {}
     for option in spec:
         if parser.isSet(option[0]):
-            log.warning('Overriding settings option "{}" with value "{}"'.format(option[0], parser.value(option[0])))
+            log.warning(f'Overriding settings option "{option[0]}" '
+                        f'with value "{parser.value(option[0])}"')
             if option[1] is bool:
-                overrides[option[0]] = parser.value(option[0]).lower() in ('true', '1', 't', 'on', 'yes', 'y')
+                overrides[option[0]] = parser.value(option[0]).lower() in ('true', '1', 't',
+                                                                          'on', 'yes', 'y')
             else:
                 overrides[option[0]] = option[1](parser.value(option[0]))
     logfiles = []

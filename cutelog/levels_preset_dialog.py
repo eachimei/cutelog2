@@ -3,14 +3,25 @@ from functools import partial
 
 from qtpy.QtCore import Qt, Signal
 from qtpy.QtGui import QBrush, QFont
-from qtpy.QtWidgets import (QCheckBox, QDialog, QDialogButtonBox, QHBoxLayout,
-                            QHeaderView, QInputDialog, QLabel, QMenu,
-                            QTableWidget, QTableWidgetItem, QVBoxLayout,
-                            QWidget)
+from qtpy.QtWidgets import (
+    QAbstractItemView,
+    QCheckBox,
+    QDialog,
+    QDialogButtonBox,
+    QHBoxLayout,
+    QHeaderView,
+    QInputDialog,
+    QLabel,
+    QMenu,
+    QTableWidget,
+    QTableWidgetItem,
+    QVBoxLayout,
+    QWidget,
+)
 
 from .config import CONFIG
 from .level_edit_dialog import LevelEditDialog
-from .log_levels import DEFAULT_LEVELS, get_default_level
+from .log_levels import get_default_level
 from .utils import show_warning_dialog
 
 
@@ -37,30 +48,32 @@ class LevelsPresetDialog(QDialog):
         self.vbox.addWidget(self.table)
         self.vbox.addWidget(self.setAsDefaultCheckbox)
 
-        self.table.setEditTriggers(QTableWidget.NoEditTriggers)
-        self.table.setSelectionBehavior(QTableWidget.SelectRows)
+        self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
+        self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.table.setHorizontalHeaderLabels(["Show", "Level name", "Preview", "Preview (dark)"])
-        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.Stretch)
+        self.table.horizontalHeader().setSectionResizeMode(QHeaderView.ResizeMode.Stretch)
         self.table.horizontalHeader().setSectionsClickable(False)
         self.table.horizontalHeader().setSectionsMovable(False)
-        self.table.horizontalHeader().setSectionResizeMode(0, QHeaderView.ResizeToContents)
+        self.table.horizontalHeader().setSectionResizeMode(
+            0, QHeaderView.ResizeMode.ResizeToContents)
         self.table.verticalHeader().setVisible(False)
         self.table.doubleClicked.connect(self.open_level_edit_dialog)
 
-        self.table.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.table.customContextMenuRequested.connect(self.open_menu)
 
-        buttons = QDialogButtonBox.Reset | QDialogButtonBox.Save | QDialogButtonBox.Cancel
+        buttons = (QDialogButtonBox.StandardButton.Reset | QDialogButtonBox.StandardButton.Save
+                   | QDialogButtonBox.StandardButton.Cancel)
         self.buttonBox = QDialogButtonBox(buttons, self)
         self.vbox.addWidget(self.buttonBox)
 
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
-        self.resetButton = self.buttonBox.button(QDialogButtonBox.Reset)
+        self.resetButton = self.buttonBox.button(QDialogButtonBox.StandardButton.Reset)
         self.resetButton.clicked.connect(self.reset)
 
     def update_output(self):
-        self.presetLabel.setText("Preset: {}".format(self.preset_name))
+        self.presetLabel.setText(f"Preset: {self.preset_name}")
         self.setAsDefaultCheckbox.setChecked(CONFIG['default_levels_preset'] == self.preset_name)
         self.table.clearContents()
         self.table.setRowCount(len(self.levels))
@@ -85,7 +98,7 @@ class LevelsPresetDialog(QDialog):
         checkbox.setChecked(level.enabled)
 
         checkbox_layout = QHBoxLayout()
-        checkbox_layout.setAlignment(Qt.AlignCenter)
+        checkbox_layout.setAlignment(Qt.AlignmentFlag.AlignCenter)
         checkbox_layout.setContentsMargins(0, 0, 0, 0)
         checkbox_layout.addWidget(checkbox)
         checkbox_widget.setLayout(checkbox_layout)
@@ -93,11 +106,11 @@ class LevelsPresetDialog(QDialog):
 
     def get_preview_items(self, level):
         previewItem = QTableWidgetItem("Log message")
-        previewItem.setBackground(QBrush(level.bg, Qt.SolidPattern))
-        previewItem.setForeground(QBrush(level.fg, Qt.SolidPattern))
+        previewItem.setBackground(QBrush(level.bg, Qt.BrushStyle.SolidPattern))
+        previewItem.setForeground(QBrush(level.fg, Qt.BrushStyle.SolidPattern))
         previewItemDark = QTableWidgetItem("Log message")
-        previewItemDark.setBackground(QBrush(level.bgDark, Qt.SolidPattern))
-        previewItemDark.setForeground(QBrush(level.fgDark, Qt.SolidPattern))
+        previewItemDark.setBackground(QBrush(level.bgDark, Qt.BrushStyle.SolidPattern))
+        previewItemDark.setForeground(QBrush(level.fgDark, Qt.BrushStyle.SolidPattern))
         font = QFont(CONFIG.logger_table_font, CONFIG.logger_table_font_size)
         fontDark = QFont(font)
         if 'bold' in level.styles:
@@ -117,10 +130,10 @@ class LevelsPresetDialog(QDialog):
         return previewItem, previewItemDark
 
     def open_level_edit_dialog(self, index):
-        levelname = self.table.item(index.row(), 1).data(Qt.DisplayRole)
+        levelname = self.table.item(index.row(), 1).data(Qt.ItemDataRole.DisplayRole)
         level = self.levels[levelname]
         d = LevelEditDialog(self, level)
-        d.setWindowModality(Qt.NonModal)
+        d.setWindowModality(Qt.WindowModality.NonModal)
         d.setWindowTitle('Level editor')
         d.level_changed.connect(self.update_output)
         d.open()
@@ -182,11 +195,11 @@ class LevelsPresetDialog(QDialog):
     def create_new_preset(self, name):
         if name in CONFIG.get_levels_presets():
             show_warning_dialog(self, "Preset creation error",
-                                'Preset named "{}" already exists.'.format(name))
+                                f'Preset named "{name}" already exists.')
             return
         if len(name.strip()) == 0:
             show_warning_dialog(self, "Preset creation error",
-                                'This preset name is not allowed.'.format(name))
+                                'This preset name is not allowed.')
             return
 
         self.preset_name = name
@@ -195,7 +208,7 @@ class LevelsPresetDialog(QDialog):
 
     def create_new_level_dialog(self):
         d = LevelEditDialog(self, creating_new_level=True, level_names=self.levels.keys())
-        d.setWindowModality(Qt.NonModal)
+        d.setWindowModality(Qt.WindowModality.NonModal)
         d.setWindowTitle('Level editor')
         d.level_changed.connect(self.level_changed)
         d.open()

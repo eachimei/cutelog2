@@ -3,9 +3,19 @@ from copy import deepcopy
 from functools import partial
 
 from qtpy.QtCore import QEvent, QObject, Qt, Signal
-from qtpy.QtWidgets import (QCheckBox, QDialog, QDialogButtonBox, QInputDialog,
-                            QLabel, QLineEdit, QListWidget, QListWidgetItem,
-                            QMenu, QVBoxLayout)
+from qtpy.QtWidgets import (
+    QAbstractItemView,
+    QCheckBox,
+    QDialog,
+    QDialogButtonBox,
+    QInputDialog,
+    QLabel,
+    QLineEdit,
+    QListWidget,
+    QListWidgetItem,
+    QMenu,
+    QVBoxLayout,
+)
 
 from .config import CONFIG
 from .utils import show_warning_dialog
@@ -35,8 +45,8 @@ class Column:
         return self
 
     def __repr__(self):
-        return "{}(name={}, title={}, width={})".format(self.__class__.__name__, self.name,
-                                                        self.title, self.width)
+        return (f"{self.__class__.__name__}(name={self.name}, "
+                f"title={self.title}, width={self.width})")
 
 
 # @Future: replace with dict when Python 3.6 becomes the minimum
@@ -82,7 +92,7 @@ class LoggerTableHeader(QObject):
         Is this the best solution or the worst solution?
         I guess we'll never know.
         """
-        if event.type() == QEvent.MouseButtonRelease:
+        if event.type() == QEvent.Type.MouseButtonRelease:
             self.mouse_released()
             return True
         return False
@@ -99,7 +109,7 @@ class LoggerTableHeader(QObject):
 
     def regen_visible(self):
         self.visible_columns = [c for c in self.columns if c.visible]
-        self.visible_names = set([c.name for c in self.visible_columns]) | SPECIAL_COLUMNS
+        self.visible_names = {c.name for c in self.visible_columns} | SPECIAL_COLUMNS
         # print(self.visible_names)
         for i, column in enumerate(self.visible_columns):
             self.header_view.resizeSection(i, column.width)
@@ -115,20 +125,20 @@ class ColumnListItem(QListWidgetItem):
         self.column = column
 
     def data(self, role):
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             return self.column.title
-        elif role == Qt.ToolTipRole:
+        elif role == Qt.ItemDataRole.ToolTipRole:
             return self.column.name
-        elif role == Qt.CheckStateRole:
+        elif role == Qt.ItemDataRole.CheckStateRole:
             if self.column.visible:
-                return Qt.Checked
+                return Qt.CheckState.Checked
             else:
-                return Qt.Unchecked
+                return Qt.CheckState.Unchecked
         return None
 
     def setData(self, role, value):
-        if role == Qt.CheckStateRole:
-            self.column.visible = value
+        if role == Qt.ItemDataRole.CheckStateRole:
+            self.column.visible = Qt.CheckState(value) == Qt.CheckState.Checked
 
 
 class HeaderEditDialog(QDialog):
@@ -156,38 +166,39 @@ class HeaderEditDialog(QDialog):
         self.vbox.addWidget(self.columnList)
         self.vbox.addWidget(self.setAsDefaultCheckbox)
 
-        self.columnList.setDragDropMode(QListWidget.InternalMove)
-        self.columnList.setDefaultDropAction(Qt.MoveAction)
-        self.columnList.setSelectionMode(QListWidget.ExtendedSelection)
+        self.columnList.setDragDropMode(QAbstractItemView.DragDropMode.InternalMove)
+        self.columnList.setDefaultDropAction(Qt.DropAction.MoveAction)
+        self.columnList.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.columnList.setAlternatingRowColors(True)
         self.columnList.installEventFilter(self)
-        self.columnList.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.columnList.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
         self.columnList.customContextMenuRequested.connect(self.open_menu)
         self.columnList.model().rowsMoved.connect(self.read_columns_from_list)
 
         # for a dumb qss hack to make selected checkboxes not white on a light theme
         self.columnList.setObjectName("ColumnList")
 
-        buttons = QDialogButtonBox.Reset | QDialogButtonBox.Save | QDialogButtonBox.Cancel
+        buttons = (QDialogButtonBox.StandardButton.Reset | QDialogButtonBox.StandardButton.Save
+                   | QDialogButtonBox.StandardButton.Cancel)
         self.buttonBox = QDialogButtonBox(buttons, self)
         self.vbox.addWidget(self.buttonBox)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)
-        self.resetButton = self.buttonBox.button(QDialogButtonBox.Reset)
+        self.resetButton = self.buttonBox.button(QDialogButtonBox.StandardButton.Reset)
         self.resetButton.clicked.connect(self.reset_to_stock)
 
     def eventFilter(self, object, event):
-        if event.type() == QEvent.KeyPress:
-            if event.key() == Qt.Key_Space or event.key() == Qt.Key_Return:
+        if event.type() == QEvent.Type.KeyPress:
+            if event.key() == Qt.Key.Key_Space or event.key() == Qt.Key.Key_Return:
                 self.toggle_selected_columns()
                 return True
-            if event.key() == Qt.Key_Delete:
+            if event.key() == Qt.Key.Key_Delete:
                 self.delete_selected()
                 return True
         return False
 
     def update_output(self):
-        self.presetLabel.setText("Preset: {}".format(self.preset_name))
+        self.presetLabel.setText(f"Preset: {self.preset_name}")
         self.setAsDefaultCheckbox.setChecked(CONFIG['default_header_preset'] == self.preset_name)
         self.columnList.clear()
         for column in self.columns:
@@ -217,8 +228,9 @@ class HeaderEditDialog(QDialog):
     def toggle_selected_columns(self):
         selected = self.columnList.selectedItems()
         for item in selected:
-            value_now = item.data(Qt.CheckStateRole)
-            item.setData(Qt.CheckStateRole, not value_now)
+            checked = item.data(Qt.ItemDataRole.CheckStateRole) == Qt.CheckState.Checked
+            item.setData(Qt.ItemDataRole.CheckStateRole,
+                         Qt.CheckState.Unchecked if checked else Qt.CheckState.Checked)
         self.columnList.reset()  # @Improvement: is there a better way to update QListWidget?
 
     def open_menu(self, position):
@@ -266,11 +278,11 @@ class HeaderEditDialog(QDialog):
     def create_new_preset(self, name):
         if name in CONFIG.get_header_presets():
             show_warning_dialog(self, "Preset creation error",
-                                'Preset named "{}" already exists.'.format(name))
+                                f'Preset named "{name}" already exists.')
             return
         if len(name.strip()) == 0:
             show_warning_dialog(self, "Preset creation error",
-                                'This preset name is not allowed.'.format(name))
+                                'This preset name is not allowed.')
             return
 
         self.preset_name = name
@@ -332,7 +344,8 @@ class CreateNewColumnDialog(QDialog):
         self.vbox.addWidget(self.titleLabel)
         self.vbox.addWidget(self.titleLine)
 
-        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, self)
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                                          | QDialogButtonBox.StandardButton.Cancel, self)
         self.vbox.addWidget(self.buttonBox)
         self.buttonBox.accepted.connect(self.accept)
         self.buttonBox.rejected.connect(self.reject)

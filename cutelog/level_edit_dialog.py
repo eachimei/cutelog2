@@ -3,9 +3,19 @@ from functools import partial
 
 from qtpy.QtCore import Signal
 from qtpy.QtGui import QValidator
-from qtpy.QtWidgets import (QCheckBox, QColorDialog, QDialog, QDialogButtonBox,
-                            QFormLayout, QGridLayout, QGroupBox, QLabel,
-                            QLineEdit, QSizePolicy, QSpacerItem)
+from qtpy.QtWidgets import (
+    QCheckBox,
+    QColorDialog,
+    QDialog,
+    QDialogButtonBox,
+    QFormLayout,
+    QGridLayout,
+    QGroupBox,
+    QLabel,
+    QLineEdit,
+    QSizePolicy,
+    QSpacerItem,
+)
 
 from .log_levels import DEFAULT_LEVELS, NO_LEVEL, LogLevel
 
@@ -14,7 +24,9 @@ class LevelEditDialog(QDialog):
 
     level_changed = Signal(LogLevel)
 
-    def __init__(self, parent, level=None, creating_new_level=False, level_names=set()):
+    def __init__(self, parent, level=None, creating_new_level=False, level_names=None):
+        if level_names is None:
+            level_names = set()
         super().__init__(parent)
 
         if level:
@@ -69,7 +81,7 @@ class LevelEditDialog(QDialog):
         self.underlineCheckBoxDark = QCheckBox(self.groupBox)
         self.formLayoutDark.addRow("Underline", self.underlineCheckBoxDark)
 
-        self.spacer = QSpacerItem(20, 40, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        self.spacer = QSpacerItem(20, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
         self.gridLayout.addItem(self.spacer, 3, 0, 1, 2)
 
         self.previewLabel = QLabel("Preview", self)
@@ -79,9 +91,10 @@ class LevelEditDialog(QDialog):
         self.previewLineDark = QLineEdit(self)
         self.gridLayout.addWidget(self.previewLineDark, 5, 1)
 
-        buttons = QDialogButtonBox.Reset | QDialogButtonBox.Save | QDialogButtonBox.Cancel
+        buttons = (QDialogButtonBox.StandardButton.Reset | QDialogButtonBox.StandardButton.Save
+                   | QDialogButtonBox.StandardButton.Cancel)
         self.buttonBox = QDialogButtonBox(buttons, self)
-        self.resetButton = self.buttonBox.button(QDialogButtonBox.Reset)
+        self.resetButton = self.buttonBox.button(QDialogButtonBox.StandardButton.Reset)
         self.gridLayout.addWidget(self.buttonBox, 6, 0, 1, 2)
 
         self.setup_widget_attributes()
@@ -98,7 +111,7 @@ class LevelEditDialog(QDialog):
         self.previewLineDark.setText("Log message")
 
         self.resetButton.setMaximumWidth(60)
-        self.resetButton.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Minimum)
+        self.resetButton.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Minimum)
 
         self.levelNameLine.setText(self.level.levelname)
         if self.creating_new_level:
@@ -224,23 +237,23 @@ class LevelEditDialog(QDialog):
         # Setting the pallette doesn't override the global stylesheet,
         # which is why I can't just set pallete with needed colors here.
 
-        self.previewLine.setStyleSheet("""QLineEdit {{
-                                               color: {};
-                                               background: {}
-                                          }}""".format(self.fg.name(), self.bg.name()))
+        self.previewLine.setStyleSheet(f"""QLineEdit {{
+                                               color: {self.fg.name()};
+                                               background: {self.bg.name()}
+                                          }}""")
 
-        self.previewLineDark.setStyleSheet("""QLineEdit {{
-                                                   color: {};
-                                                   background: {}
-                                              }}""".format(self.fgDark.name(), self.bgDark.name()))
+        self.previewLineDark.setStyleSheet(f"""QLineEdit {{
+                                                   color: {self.fgDark.name()};
+                                                   background: {self.bgDark.name()}
+                                              }}""")
 
-        self.bgColorPreview.setStyleSheet('QLineEdit {{background: {} }}'.format(self.bg.name()))
-        self.fgColorPreview.setStyleSheet('QLineEdit {{background: {} }}'.format(self.fg.name()))
+        self.bgColorPreview.setStyleSheet(f'QLineEdit {{background: {self.bg.name()} }}')
+        self.fgColorPreview.setStyleSheet(f'QLineEdit {{background: {self.fg.name()} }}')
 
-        self.bgColorPreviewDark.setStyleSheet('QLineEdit {{ background: {} }}'
-                                              .format(self.bgDark.name()))
-        self.fgColorPreviewDark.setStyleSheet('QLineEdit {{ background: {} }}'
-                                              .format(self.fgDark.name()))
+        self.bgColorPreviewDark.setStyleSheet(f'QLineEdit {{ background: {self.bgDark.name()} }}'
+                                              )
+        self.fgColorPreviewDark.setStyleSheet(f'QLineEdit {{ background: {self.fgDark.name()} }}'
+                                              )
 
         font = self.previewLine.font()
         font.setBold(self.bold)
@@ -258,9 +271,9 @@ class LevelEditDialog(QDialog):
 
     def level_name_valid(self):
         if self.levelNameLine.hasAcceptableInput():
-            self.buttonBox.button(QDialogButtonBox.Save).setEnabled(True)
+            self.buttonBox.button(QDialogButtonBox.StandardButton.Save).setEnabled(True)
         else:
-            self.buttonBox.button(QDialogButtonBox.Save).setEnabled(False)
+            self.buttonBox.button(QDialogButtonBox.StandardButton.Save).setEnabled(False)
 
 
 class LevelNameValidator(QValidator):
@@ -270,6 +283,6 @@ class LevelNameValidator(QValidator):
 
     def validate(self, levelname, pos):
         if len(levelname.strip()) == 0 or levelname in self.level_names:
-            return self.Intermediate, levelname, pos
+            return QValidator.State.Intermediate, levelname, pos
         else:
-            return self.Acceptable, levelname.upper(), pos
+            return QValidator.State.Acceptable, levelname.upper(), pos

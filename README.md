@@ -25,21 +25,32 @@ Light theme | Dark theme
 <img src="https://raw.githubusercontent.com/busimus/cutelog/master/screenshots/main_light.png" width="240"> | <img src="https://raw.githubusercontent.com/busimus/cutelog/master/screenshots/main_dark.png" width="240">
 
 ## Installation
-**If you're using Linux**, install PyQt5 (or PySide2) from your package manager before installing cutelog (package name is probably ``python3-pyqt5`` or ``python-pyqt5``). Or just run ``pip install pyqt5`` to install it from pip, which is sub-optimal.
+**If you're using Linux**, install PyQt6 (or PySide6) from your package manager before installing cutelog (package name is probably ``python3-pyqt6`` or ``python-pyqt6``). Or just run ``pip install pyqt6`` to install it from pip, which is sub-optimal.
 
 ```
 $ pip install cutelog
 ```
-Or install the latest development version from the source (requires PyQt5 to build resources):
+Or install the latest development version from the source:
 
 ```
 $ pip install git+https://github.com/busimus/cutelog.git
 ```
 
 ### Requirements
-* Python 3.5 (or newer)
-* PyQt5 (preferably 5.6 or newer) or PySide2
-* [QtPy](https://github.com/spyder-ide/qtpy)
+* Python 3.10 (or newer)
+* PyQt6 or PySide6
+* [QtPy](https://github.com/spyder-ide/qtpy) 2.4 or newer
+
+### Desktop entry (Linux)
+The wheel deliberately doesn't install into ``share/`` — that only works for system-wide
+installs and silently does nothing inside a virtualenv or pipx environment. Distribution
+packagers should install ``share/cutelog.desktop`` and ``share/cutelog.png`` from the sdist.
+To add the menu entry manually:
+
+```
+$ xdg-desktop-menu install --novendor share/cutelog.desktop
+$ xdg-icon-resource install --novendor --size 128 share/cutelog.png cutelog
+```
 
 ## Usage
 1. Start `cutelog`
@@ -60,8 +71,8 @@ This will create "log namespaces" which allow you to filter out messages from va
 ## Attributions
 Free software used:
 * Qt via either:
-    * [PyQt5](https://riverbankcomputing.com/software/pyqt/intro) - GPLv3 License, Copyright (c) 2019 Riverbank Computing Limited <info@riverbankcomputing.com>
-    * [PySide2](https://wiki.qt.io/PySide2) - LGPLv3 License, Copyright (C) 2015 The Qt Company Ltd (http://www.qt.io/licensing/)
+    * [PyQt6](https://riverbankcomputing.com/software/pyqt/intro) - GPLv3 License, Copyright (c) 2024 Riverbank Computing Limited <info@riverbankcomputing.com>
+    * [PySide6](https://wiki.qt.io/Qt_for_Python) - LGPLv3 License, Copyright (C) 2015 The Qt Company Ltd (http://www.qt.io/licensing/)
 * [QtPy](https://github.com/spyder-ide/qtpy) - MIT License, Copyright (c) 2011- QtPy contributors and others
 * [jsonstream](https://github.com/Dunes/json_stream) - MIT License, Copyright (c) 2020 Dunes
 * [ion-icons](https://github.com/ionic-team/ionicons) - MIT License, Copyright (c) 2015-present Ionic (http://ionic.io/)

@@ -3,9 +3,11 @@ from datetime import datetime
 from qtpy.QtCore import Signal
 from qtpy.QtGui import QDoubleValidator, QFont, QIntValidator, QValidator
 from qtpy.QtWidgets import QDialog, QDialogButtonBox, QMessageBox
+from qtpy.uic import loadUi
 
-from .config import CONFIG, MSGPACK_SUPPORT, CBOR_SUPPORT
-from .utils import loadUi, show_info_dialog
+from .config import CBOR_SUPPORT, CONFIG, MSGPACK_SUPPORT
+from .resources_loader import get_ui_path
+from .utils import show_info_dialog
 
 
 class SettingsDialog(QDialog):
@@ -19,10 +21,11 @@ class SettingsDialog(QDialog):
         self.setupUi()
 
     def setupUi(self):
-        self.ui = loadUi(CONFIG.get_ui_qfile("settings_dialog.ui"), baseinstance=self)
-        self.applyButton = self.buttonBox.button(QDialogButtonBox.Apply)
+        self.ui = loadUi(get_ui_path("settings_dialog.ui"), baseinstance=self)
+        self.applyButton = self.buttonBox.button(QDialogButtonBox.StandardButton.Apply)
         self.applyButton.clicked.connect(self.save_to_config)
-        self.restoreDefaultsButton = self.buttonBox.button(QDialogButtonBox.RestoreDefaults)
+        self.restoreDefaultsButton = self.buttonBox.button(
+            QDialogButtonBox.StandardButton.RestoreDefaults)
         self.restoreDefaultsButton.clicked.connect(self.confirm_restore_defaults)
 
         self.listenHostLine.textChanged.connect(self.server_options_changed)
@@ -142,16 +145,16 @@ class SettingsDialog(QDialog):
         m = QMessageBox(self.parent())
         m.setText('You need to restart the server for the changes to take effect')
         m.setWindowTitle('Warning')
-        m.setIcon(QMessageBox.Information)
+        m.setIcon(QMessageBox.Icon.Information)
         m.show()
 
     def confirm_restore_defaults(self):
-        m = QMessageBox(QMessageBox.Question, "Restore to defaults",
+        m = QMessageBox(QMessageBox.Icon.Question, "Restore to defaults",
                         "Restore settings to the default state?\n"
                         "You'll need to restart the program.",
-                        QMessageBox.Yes | QMessageBox.No, self)
-        m.setDefaultButton(QMessageBox.No)
-        yesButton = m.button(QMessageBox.Yes)
+                        QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No, self)
+        m.setDefaultButton(QMessageBox.StandardButton.No)
+        yesButton = m.button(QMessageBox.StandardButton.Yes)
         yesButton.clicked.connect(self.restore_defaults)
         m.show()
 
@@ -175,6 +178,6 @@ class TimeFormatValidator(QValidator):
     def validate(self, fmt_string, pos):
         try:
             datetime.now().strftime(fmt_string)
-            return self.Acceptable, fmt_string, pos
+            return QValidator.State.Acceptable, fmt_string, pos
         except Exception:
-            return self.Intermediate, fmt_string, pos
+            return QValidator.State.Intermediate, fmt_string, pos

@@ -1,7 +1,15 @@
 from datetime import datetime
-from qtpy.QtCore import QFile, Qt, QTextStream, QThread, Signal
-from qtpy.QtWidgets import (QFileDialog, QInputDialog, QMainWindow, QMenuBar,
-                            QStatusBar, QTabWidget, QProgressDialog)
+
+from qtpy.QtCore import Qt, QThread, Signal
+from qtpy.QtWidgets import (
+    QFileDialog,
+    QInputDialog,
+    QMainWindow,
+    QMenuBar,
+    QProgressDialog,
+    QStatusBar,
+    QTabWidget,
+)
 
 from .about_dialog import AboutDialog
 from .config import CONFIG
@@ -9,16 +17,14 @@ from .listener import LogServer
 from .logger_tab import LoggerTab, LogRecord
 from .merge_dialog import MergeDialog
 from .pop_in_dialog import PopInDialog
+from .resources_loader import get_stylesheet
 from .settings_dialog import SettingsDialog
-from .utils import (center_widget_on_screen, show_critical_dialog,
-                    show_warning_dialog)
+from .utils import center_widget_on_screen, show_critical_dialog, show_warning_dialog
 
 
 class MainWindow(QMainWindow):
 
-    load_records = Signal(object)
-
-    def __init__(self, log, app, load_logfiles=[]):
+    def __init__(self, log, app, load_logfiles=()):
         self.log = log.getChild('Main')
         self.app = app
         super().__init__()
@@ -205,8 +211,8 @@ class MainWindow(QMainWindow):
 
     def settings_dialog(self):
         d = SettingsDialog(self)
-        d.setWindowModality(Qt.ApplicationModal)
-        d.setAttribute(Qt.WA_DeleteOnClose, True)
+        d.setWindowModality(Qt.WindowModality.ApplicationModal)
+        d.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
         d.settings_changed.connect(self.settings_changed)
         d.open()
 
@@ -228,22 +234,10 @@ class MainWindow(QMainWindow):
         if CONFIG['light_theme_is_native']:
             self.set_style_to_stock()
             return
-        f = QFile(":/light_theme.qss")
-        f.open(QFile.ReadOnly | QFile.Text)
-        ts = QTextStream(f)
-        qss = ts.readAll()
-        # f = open(Config.get_resource_path('light_theme.qss', 'resources/ui'), 'r')
-        # qss = f.read()
-        self.app.setStyleSheet(qss)
+        self.app.setStyleSheet(get_stylesheet('light_theme.qss'))
 
     def reload_dark_style(self):
-        f = QFile(":/dark_theme.qss")
-        f.open(QFile.ReadOnly | QFile.Text)
-        ts = QTextStream(f)
-        qss = ts.readAll()
-        # f = open(Config.get_resource_path('dark_theme.qss', 'resources/ui'), 'r')
-        # qss = f.read()
-        self.app.setStyleSheet(qss)
+        self.app.setStyleSheet(get_stylesheet('dark_theme.qss'))
 
     def set_style_to_stock(self):
         self.app.setStyleSheet('')
@@ -295,9 +289,10 @@ class MainWindow(QMainWindow):
             self.start_server()
 
     def on_connection(self, conn, conn_id):
-        self.log.debug('New connection id={}'.format(conn_id))
+        self.log.debug(f'New connection id={conn_id}')
 
-        if (self.single_tab_mode or CONFIG['new_conn_clears_tab']) and len(self.loggers_by_name) > 0:
+        if ((self.single_tab_mode or CONFIG['new_conn_clears_tab'])
+                and len(self.loggers_by_name) > 0):
             new_logger, _ = self.current_logger_and_index()
             new_logger.add_connection(conn)
             if CONFIG['new_conn_clears_tab']:
@@ -326,7 +321,7 @@ class MainWindow(QMainWindow):
         return new_logger, index
 
     def make_logger_name_unique(self, name):
-        name_f = "{} {{}}".format(name)
+        name_f = f"{name} {{}}"
         c = 1
         while name in self.loggers_by_name:
             name = name_f.format(c)
@@ -337,13 +332,13 @@ class MainWindow(QMainWindow):
         self.statusBar().showMessage(string, timeout)
 
     def rename_tab_dialog(self):
-        logger, index = self.current_logger_and_index()
+        logger, _index = self.current_logger_and_index()
         if not logger:
             return
 
         d = QInputDialog(self)
-        d.setLabelText('Enter the new name for the "{}" tab:'.format(logger.name))
-        d.setWindowTitle('Rename the "{}" tab'.format(logger.name))
+        d.setLabelText(f'Enter the new name for the "{logger.name}" tab:')
+        d.setWindowTitle(f'Rename the "{logger.name}" tab')
         d.textValueSelected.connect(self.rename_current_tab)
         d.open()
 
@@ -351,39 +346,39 @@ class MainWindow(QMainWindow):
         logger, index = self.current_logger_and_index()
         if new_name in self.loggers_by_name and new_name != logger.name:
             show_warning_dialog(self, "Rename error",
-                                'Logger named "{}" already exists.'.format(new_name))
+                                f'Logger named "{new_name}" already exists.')
             return
-        self.log.debug('Renaming logger "{}" to "{}"'.format(logger.name, new_name))
+        self.log.debug(f'Renaming logger "{logger.name}" to "{new_name}"')
         del self.loggers_by_name[logger.name]
         logger.name = new_name
         self.loggers_by_name[new_name] = logger
-        logger.log.name = '.'.join(logger.log.name.split('.')[:-1]) + '.{}'.format(new_name)
+        logger.log.name = '.'.join(logger.log.name.split('.')[:-1]) + f'.{new_name}'
         self.loggerTabWidget.setTabText(index, new_name)
 
     def trim_records_dialog(self):
-        logger, index = self.current_logger_and_index()
+        logger, _index = self.current_logger_and_index()
         if not logger:
             return
 
         d = QInputDialog(self)
-        d.setInputMode(QInputDialog.IntInput)
+        d.setInputMode(QInputDialog.InputMode.IntInput)
         d.setIntRange(0, 100000000)  # because it sets intMaximum to 99 by default. why??
-        d.setLabelText('Keep this many records out of {}:'.format(logger.record_model.rowCount()))
-        d.setWindowTitle('Trim tab records of "{}" logger'.format(logger.name))
+        d.setLabelText(f'Keep this many records out of {logger.record_model.rowCount()}:')
+        d.setWindowTitle(f'Trim tab records of "{logger.name}" logger')
         d.intValueSelected.connect(self.trim_current_tab_records)
         d.open()
 
     def trim_current_tab_records(self, n):
-        logger, index = self.current_logger_and_index()
+        logger, _index = self.current_logger_and_index()
         logger.record_model.trim_except_last_n(n)
 
     def max_capacity_dialog(self):
-        logger, index = self.current_logger_and_index()
+        logger, _index = self.current_logger_and_index()
         if not logger:
             return
 
         d = QInputDialog(self)
-        d.setInputMode(QInputDialog.IntInput)
+        d.setInputMode(QInputDialog.InputMode.IntInput)
         d.setIntRange(0, 100000000)  # because it sets intMaximum to 99 by default. why??
         max_now = logger.record_model.max_capacity
         max_now = "not set" if max_now is None else max_now
@@ -394,17 +389,17 @@ class MainWindow(QMainWindow):
         d.open()
 
     def set_max_capacity(self, n):
-        logger, index = self.current_logger_and_index()
+        logger, _index = self.current_logger_and_index()
         logger.set_max_capacity(n)
 
     def merge_tabs_dialog(self):
         d = MergeDialog(self, self.loggers_by_name)
-        d.setWindowModality(Qt.WindowModal)
+        d.setWindowModality(Qt.WindowModality.WindowModal)
         d.merge_tabs_signal.connect(self.merge_tabs)
         d.show()
 
     def merge_tabs(self, dst, srcs, keep_alive):
-        self.log.debug('Merging tabs: dst="{}", srcs={}, keep={}'.format(dst, srcs, keep_alive))
+        self.log.debug(f'Merging tabs: dst="{dst}", srcs={srcs}, keep={keep_alive}')
 
         dst_logger = self.loggers_by_name[dst]
         for src_name in srcs:
@@ -429,7 +424,7 @@ class MainWindow(QMainWindow):
         self.close_tab(index)
 
     def close_tab(self, index):
-        self.log.debug("Tab close requested: {}".format(index))
+        self.log.debug(f"Tab close requested: {index}")
         logger = self.loggerTabWidget.widget(index)
         self.loggerTabWidget.removeTab(index)
         self.log.debug(logger.name)
@@ -460,12 +455,12 @@ class MainWindow(QMainWindow):
         logger, index = self.current_logger_and_index()
         if not logger:
             return
-        self.log.debug("Tab pop out requested: {}".format(int(index)))
+        self.log.debug(f"Tab pop out requested: {int(index)}")
 
         logger.destroyed.connect(logger.closeEvent)
-        logger.setAttribute(Qt.WA_DeleteOnClose, True)
-        logger.setWindowFlags(Qt.Window)
-        logger.setWindowTitle('cutelog: "{}"'.format(self.loggerTabWidget.tabText(index)))
+        logger.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
+        logger.setWindowFlags(Qt.WindowType.Window)
+        logger.setWindowTitle(f'cutelog: "{self.loggerTabWidget.tabText(index)}"')
         self.popped_out_loggers[logger.name] = logger
         self.loggerTabWidget.removeTab(index)
         logger.popped_out = True
@@ -475,18 +470,18 @@ class MainWindow(QMainWindow):
     def pop_in_tabs_dialog(self):
         d = PopInDialog(self, self.loggers_by_name.values())
         d.pop_in_tabs.connect(self.pop_in_tabs)
-        d.setWindowModality(Qt.ApplicationModal)
+        d.setWindowModality(Qt.WindowModality.ApplicationModal)
         d.open()
 
     def pop_in_tabs(self, names):
         for name in names:
-            self.log.debug('Popping in logger "{}"'.format(name))
+            self.log.debug(f'Popping in logger "{name}"')
             logger = self.loggers_by_name[name]
             self.pop_in_tab(logger)
 
     def pop_in_tab(self, logger):
-        logger.setWindowFlags(Qt.Widget)
-        logger.setAttribute(Qt.WA_DeleteOnClose, False)
+        logger.setWindowFlags(Qt.WindowType.Widget)
+        logger.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, False)
         logger.destroyed.disconnect(logger.closeEvent)
         logger.setWindowTitle(logger.name)
         logger.popped_out = False
@@ -496,7 +491,7 @@ class MainWindow(QMainWindow):
 
     def open_load_records_dialog(self):
         d = QFileDialog(self)
-        d.setFileMode(QFileDialog.ExistingFile)
+        d.setFileMode(QFileDialog.FileMode.ExistingFile)
         d.fileSelected.connect(self.load_records)
         d.setWindowTitle('Load records from...')
         d.open()
@@ -511,24 +506,25 @@ class MainWindow(QMainWindow):
         lt.loading_error.connect(partial(show_critical_dialog, self, 'Error while loading records'))
         progress.canceled.connect(lt.requestInterruption)
         lt.finished.connect(progress.reset)
-        lt.start(priority=QThread.LowPriority)
+        lt.start(priority=QThread.Priority.LowPriority)
 
     def open_loaded_records(self, loaded):
         self.log.debug("Received loaded records")
         index = None
         try:
             if not loaded or not loaded[1]:
-                show_warning_dialog(self, "No records loaded", "No records could be loaded from the file")
+                show_warning_dialog(self, "No records loaded",
+                                "No records could be loaded from the file")
                 return
             logger_name, records = loaded
             new_logger, index = self.create_logger(None, logger_name)
             new_logger.merge_with_records(records)
             self.loggerTabWidget.setCurrentIndex(index)
-            self.set_status('Records have been loaded into "{}" tab'.format(new_logger.name))
+            self.set_status(f'Records have been loaded into "{new_logger.name}" tab')
         except Exception as e:
             if index:
                 self.close_tab(index)
-            text = "Error while loading records: \n{}".format(e)
+            text = f"Error while loading records: \n{e}"
             self.log.error(text, exc_info=True)
             show_critical_dialog(self, "Couldn't load records", text)
 
@@ -540,11 +536,11 @@ class MainWindow(QMainWindow):
 
         d = QFileDialog(self)
         dt = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        d.selectFile("{}_{}.log".format(logger.name, dt))
-        d.setAcceptMode(QFileDialog.AcceptSave)
-        d.setFileMode(QFileDialog.AnyFile)
+        d.selectFile(f"{logger.name}_{dt}.log")
+        d.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
+        d.setFileMode(QFileDialog.FileMode.AnyFile)
         d.fileSelected.connect(partial(self.save_records, logger))
-        d.setWindowTitle('Save records of "{}" tab to...'.format(logger.name))
+        d.setWindowTitle(f'Save records of "{logger.name}" tab to...')
         d.open()
 
     def save_records(self, logger, path):
@@ -570,10 +566,10 @@ class MainWindow(QMainWindow):
             record_list = RecordList(records)
             with open(path, 'w') as f:
                 json.dump(record_list, f, indent=1)
-            self.set_status('Records have been saved to "{}"'.format(path))
+            self.set_status(f'Records have been saved to "{path}"')
 
         except Exception as e:
-            text = "Error while saving records: \n{}".format(e)
+            text = f"Error while saving records: \n{e}"
             self.log.error(text, exc_info=True)
             show_critical_dialog(self, "Couldn't save records", text)
 
@@ -621,18 +617,18 @@ class LoadingThread(QThread):
         self.log.debug('Starting loading thread')
         records = []
 
+        name = path.basename(self.load_path)
         try:
-            name = path.basename(self.load_path)
-            file = open(self.load_path, 'r')
-        except Exception as e:
-            text = "Error while opening the file: \n{}".format(e)
-            self.log.error(text, exc_info=True)
-            self.loading_error.emit(text)
-            return
-        try:
-            records = self.load(file)
-        except Exception as e:
-            text = "Error while loading records: \n{}".format(e)
+            with open(self.load_path) as file:
+                try:
+                    records = self.load(file)
+                except Exception as e:
+                    text = f"Error while loading records: \n{e}"
+                    self.log.error(text, exc_info=True)
+                    self.loading_error.emit(text)
+                    return
+        except OSError as e:
+            text = f"Error while opening the file: \n{e}"
             self.log.error(text, exc_info=True)
             self.loading_error.emit(text)
             return
@@ -648,7 +644,7 @@ class LoadingThread(QThread):
             # and if it's not a valid JSON object it'll fail quickly and fall back to jsonstream
             return self.load_native(file)
         except Exception as e:
-            self.log.debug("Error while loading natively: {}".format(e), exc_info=True)
+            self.log.debug(f"Error while loading natively: {e}", exc_info=True)
         file.seek(0)
         return self.load_stream(file)
 
@@ -659,9 +655,8 @@ class LoadingThread(QThread):
         rec_dicts = json.load(file)
         for i, rec_dict in enumerate(rec_dicts):
             records.append(LogRecord(rec_dict))
-            if i % 10000 == 0:
-                if self.isInterruptionRequested():
-                    break
+            if i % 10000 == 0 and self.isInterruptionRequested():
+                break
         if len(records) == 0:
             raise Exception("No records found")
         return records
@@ -671,12 +666,11 @@ class LoadingThread(QThread):
         self.log.debug("Attempting to load with jsonstream")
         records = []
         for i, data in enumerate(jsonstream.load(file)):
-            if type(data) == list:
+            if isinstance(data, list):
                 for rec in data:
                     records.append(LogRecord(rec))
             else:
                 records.append(LogRecord(data))
-            if i % 1000 == 0:
-                if self.isInterruptionRequested():
-                    break
+            if i % 1000 == 0 and self.isInterruptionRequested():
+                break
         return records
