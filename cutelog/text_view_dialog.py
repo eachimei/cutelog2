@@ -1,7 +1,15 @@
 from qtpy.QtGui import QFont
-from qtpy.QtWidgets import (QApplication, QDialog, QHBoxLayout, QLayout,
-                            QPlainTextEdit, QPushButton, QSizePolicy,
-                            QSpacerItem, QVBoxLayout)
+from qtpy.QtWidgets import (
+    QApplication,
+    QDialog,
+    QHBoxLayout,
+    QLayout,
+    QPlainTextEdit,
+    QPushButton,
+    QSizePolicy,
+    QSpacerItem,
+    QVBoxLayout,
+)
 
 from .config import CONFIG
 
@@ -21,8 +29,8 @@ class TextViewDialog(QDialog):
 
         self.verticalLayout.addWidget(self.textEdit)
         self.horizontalLayout = QHBoxLayout()
-        self.horizontalLayout.setSizeConstraint(QLayout.SetDefaultConstraint)
-        spacerItem = QSpacerItem(40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum)
+        self.horizontalLayout.setSizeConstraint(QLayout.SizeConstraint.SetDefaultConstraint)
+        spacerItem = QSpacerItem(40, 20, QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Minimum)
         self.horizontalLayout.addItem(spacerItem)
         self.horizontalLayout.addWidget(self.copyButton)
         self.horizontalLayout.addWidget(self.closeButton)
@@ -30,7 +38,7 @@ class TextViewDialog(QDialog):
         self.closeButton.clicked.connect(self.reject)
 
         font = QFont(CONFIG['text_view_dialog_font'], CONFIG['text_view_dialog_font_size'])
-        font.setStyleHint(QFont.Monospace)
+        font.setStyleHint(QFont.StyleHint.Monospace)
         self.textEdit.setFont(font)
 
         self.closeButton.setText('Close')

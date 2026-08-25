@@ -1,8 +1,18 @@
 # from qtpy.uic import loadUi
 from qtpy.QtCore import Qt, Signal
-from qtpy.QtWidgets import (QAbstractItemView, QCheckBox, QComboBox, QDialog,
-                            QDialogButtonBox, QGridLayout, QLabel, QListWidget,
-                            QListWidgetItem, QSizePolicy, QSpacerItem)
+from qtpy.QtWidgets import (
+    QAbstractItemView,
+    QCheckBox,
+    QComboBox,
+    QDialog,
+    QDialogButtonBox,
+    QGridLayout,
+    QLabel,
+    QListWidget,
+    QListWidgetItem,
+    QSizePolicy,
+    QSpacerItem,
+)
 
 
 class LoggerListItem(QListWidgetItem):
@@ -11,7 +21,7 @@ class LoggerListItem(QListWidgetItem):
         self.name = name
 
     def data(self, role):
-        if role == Qt.DisplayRole:
+        if role == Qt.ItemDataRole.DisplayRole:
             return self.name
         return None
 
@@ -35,11 +45,12 @@ class MergeDialog(QDialog):
         self.gridLayout = QGridLayout(self)
         self.dstComboBox = QComboBox(self)
         self.gridLayout.addWidget(self.dstComboBox, 1, 2, 1, 2)
-        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Cancel | QDialogButtonBox.Ok, self)
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Cancel
+                                          | QDialogButtonBox.StandardButton.Ok, self)
         self.gridLayout.addWidget(self.buttonBox, 5, 0, 1, 4)
         self.loggerList = QListWidget(self)
-        self.loggerList.setDefaultDropAction(Qt.IgnoreAction)
-        self.loggerList.setSelectionMode(QAbstractItemView.MultiSelection)
+        self.loggerList.setDefaultDropAction(Qt.DropAction.IgnoreAction)
+        self.loggerList.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
         self.gridLayout.addWidget(self.loggerList, 1, 0, 4, 2)
         self.keepAliveCheckBox = QCheckBox("Keep connections alive", self)
         self.keepAliveCheckBox.setChecked(True)
@@ -48,7 +59,7 @@ class MergeDialog(QDialog):
         self.gridLayout.addWidget(self.srcsLabel, 0, 0, 1, 2)
         self.dstLabel = QLabel("Merge all into:", self)
         self.gridLayout.addWidget(self.dstLabel, 0, 2, 1, 2)
-        spacerItem = QSpacerItem(20, 169, QSizePolicy.Minimum, QSizePolicy.Expanding)
+        spacerItem = QSpacerItem(20, 169, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
         self.gridLayout.addItem(spacerItem, 4, 2, 1, 2)
 
         self.buttonBox.accepted.connect(self.accept)
@@ -56,7 +67,7 @@ class MergeDialog(QDialog):
 
         self.loggerList.selectionModel().selectionChanged.connect(self.merge_list_changed)
         self.dstComboBox.currentTextChanged.connect(self.merge_dst_changed)
-        self.ok_button = self.buttonBox.button(QDialogButtonBox.Ok)
+        self.ok_button = self.buttonBox.button(QDialogButtonBox.StandardButton.Ok)
         self.ok_button.setEnabled(False)
         self.keepAliveCheckBox.setToolTip("If disabled then only the destination connection "
                                           "will still be alive after merging.")
@@ -64,7 +75,7 @@ class MergeDialog(QDialog):
         self.fill_logger_list()
 
     def fill_logger_list(self):
-        for logger_name in self.loggers.keys():
+        for logger_name in self.loggers:
             LoggerListItem(self.loggerList, logger_name)
 
     def merge_list_changed(self, sel, desel):

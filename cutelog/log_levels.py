@@ -8,7 +8,9 @@ from .config import CONFIG
 
 class LogLevel:
     def __init__(self, levelname, enabled=True, fg=None, bg=None,
-                 fgDark=None, bgDark=None, styles=set(), stylesDark=None, load=None):
+                 fgDark=None, bgDark=None, styles=None, stylesDark=None, load=None):
+        if styles is None:
+            styles = set()
         if load:
             self.loads(load)
             return
@@ -66,8 +68,7 @@ class LogLevel:
         return self
 
     def __repr__(self):
-        return "{}(levelname={}, enabled={})".format(self.__class__.__name__, self.levelname,
-                                                     self.enabled)
+        return f"{self.__class__.__name__}(levelname={self.levelname}, enabled={self.enabled})"
 
 
 DEFAULT_LEVELS = \
@@ -116,7 +117,4 @@ class LevelFilter:
             return True
 
         level = self.levels.get(levelname)
-        if level and level.enabled:
-            return True
-
-        return False
+        return bool(level and level.enabled)

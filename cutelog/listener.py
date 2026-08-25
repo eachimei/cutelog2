@@ -4,9 +4,15 @@ import struct
 import time
 
 from qtpy.QtCore import QThread, Signal
-from qtpy.QtNetwork import QHostAddress, QTcpServer, QTcpSocket, QNetworkProxyFactory
+from qtpy.QtNetwork import (
+    QAbstractSocket,
+    QHostAddress,
+    QNetworkProxyFactory,
+    QTcpServer,
+    QTcpSocket,
+)
 
-from .config import CONFIG, MSGPACK_SUPPORT, CBOR_SUPPORT
+from .config import CBOR_SUPPORT, CONFIG, MSGPACK_SUPPORT
 from .logger_tab import LogRecord
 from .utils import show_critical_dialog
 
@@ -46,13 +52,13 @@ class LogServer(QTcpServer):
             err_string = self.errorString()
             show_critical_dialog(self.main_window, 'Error while starting the server', err_string)
         else:
-            address = "{}:{}".format(self.host.toString(), self.port)
-            self.main_window.set_status('Server is listening on {}...'.format(address))
+            address = f"{self.host.toString()}:{self.port}"
+            self.main_window.set_status(f'Server is listening on {address}...')
 
     def incomingConnection(self, socketDescriptor):
         self.conn_count += 1
         conn_id = str(self.conn_count)
-        self.log.info('New connection id={}'.format(conn_id))
+        self.log.info(f'New connection id={conn_id}')
         new_conn = LogConnection(self, socketDescriptor, conn_id, self.log)
 
         self.on_connection(new_conn, conn_id)
@@ -72,22 +78,22 @@ class LogServer(QTcpServer):
         self.main_window.set_status('Server has stopped')
 
     def wait_connections_stopped(self):
-        self.log.debug('Waiting for {} connections threads to stop'.format(len(self.threads)))
+        self.log.debug(f'Waiting for {len(self.threads)} connections threads to stop')
         for thread in self.threads.copy():
             try:
                 if not thread.wait(1500):
                     # @Hmm: sometimes wait() complains about QThread waiting on itself
-                    self.log.debug("Thread \"{}\" didn't stop in time, exiting".format(thread))
+                    self.log.debug(f"Thread \"{thread}\" didn't stop in time, exiting")
                     return
             except RuntimeError:  # happens when thread has been deleted before we got to it
-                self.log.debug('Thread {} has been deleted already'.format(thread))
+                self.log.debug(f'Thread {thread} has been deleted already')
         self.log.debug('Waiting for connections has stopped')
 
     def cleanup_connection(self, connection):
         try:
             self.threads.remove(connection)
         except Exception:
-            self.log.error('Double delete on connection: {}'.format(connection), exc_info=True)
+            self.log.error(f'Double delete on connection: {connection}', exc_info=True)
             return
 
     def stop_benchmark(self):
@@ -111,21 +117,22 @@ class LogConnection(QThread):
         self.setup_serializers()
 
     def __repr__(self):
-        return "{}(id={})".format(self.__class__.__name__, self.conn_id)
+        return f"{self.__class__.__name__}(id={self.conn_id})"
 
     def setup_serializers(self):
         self.serializers = {'pickle': pickle.loads, 'json': json.loads}
         if MSGPACK_SUPPORT:
-            import msgpack
             from functools import partial
+
+            import msgpack
             self.serializers['msgpack'] = partial(msgpack.loads, raw=False)
         if CBOR_SUPPORT:
-            import cbor
-            self.serializers['cbor'] = cbor.loads
+            import cbor2
+            self.serializers['cbor'] = cbor2.loads
         self.deserialize = self.serializers[CONFIG['default_serialization_format']]
 
     def run(self):
-        self.log.debug('Connection id={} is starting'.format(self.conn_id))
+        self.log.debug(f'Connection id={self.conn_id} is starting')
 
         def wait_and_read(n_bytes):
             """
@@ -138,14 +145,15 @@ class LogConnection(QThread):
                 if sock.bytesAvailable() == 0:
                     new_data = sock.waitForReadyRead(100)  # wait for 100ms between read attempts
                     if not new_data:
-                        if sock.state() != sock.ConnectedState or self.need_to_stop():
+                        if (sock.state() != QAbstractSocket.SocketState.ConnectedState
+                                or self.need_to_stop()):
                             return None
                         else:
                             continue
                 if self.need_to_stop():
                     return None
                 new_data = sock.read(n_bytes - len(data))
-                if type(new_data) != bytes:
+                if not isinstance(new_data, bytes):
                     new_data = new_data.data()
                 data += new_data
             return data
@@ -181,11 +189,11 @@ class LogConnection(QThread):
                 continue
             self.new_record.emit(record)
 
-        self.log.debug('Connection id={} is stopping'.format(self.conn_id))
+        self.log.debug(f'Connection id={self.conn_id} is stopping')
         sock.disconnectFromHost()
         sock.close()
         self.connection_finished.emit(self)
-        self.log.debug('Connection id={} has stopped'.format(self.conn_id))
+        self.log.debug(f'Connection id={self.conn_id} has stopped')
 
     def need_to_stop(self):
         return any([self.tab_closed, self.isInterruptionRequested()])
@@ -207,15 +215,15 @@ class LogConnection(QThread):
         except Exception:
             self.log.error('Internal request decoding failed', exc_info=True)
             return
-        self.log.debug('Handling internal cmd="{}", value="{}"'.format(cmd, value))
+        self.log.debug(f'Handling internal cmd="{cmd}", value="{value}"')
         if cmd == 'format':
             if value in self.serializers:
-                self.log.debug('Changing serialization format to "{}"'.format(value))
+                self.log.debug(f'Changing serialization format to "{value}"')
                 self.deserialize = self.serializers[value]
             else:
-                self.log.error('Serialization format "{}" is not supported'.format(value))
+                self.log.error(f'Serialization format "{value}" is not supported')
         else:
-            self.log.error('No such command "{}"'.format(cmd))
+            self.log.error(f'No such command "{cmd}"')
 
 
 class BenchmarkConnection(LogConnection):
@@ -253,7 +261,7 @@ class BenchmarkConnection(LogConnection):
             if self.need_to_stop():
                 break
             dd = d.copy()
-            dd['msg'] = "msg {}".format(c)
+            dd['msg'] = f"msg {c}"
             dd['name'] = random.choice(test_names)
             t = time.time()
             dd['created'] = t
@@ -269,7 +277,7 @@ class BenchmarkConnection(LogConnection):
             c += 1
             time.sleep(CONFIG.benchmark_interval)
         self.connection_finished.emit(self)
-        self.log.debug('Connection id={} has stopped'.format(self.conn_id))
+        self.log.debug(f'Connection id={self.conn_id} has stopped')
 
 
 class BenchmarkMonitor(QThread):
@@ -289,7 +297,7 @@ class BenchmarkMonitor(QThread):
             time.sleep(0.5)
             readouts.append(self.logger.monitor_count)
             average = int(sum(readouts) / len(readouts)) * 2
-            status = "{} rows/s, average: {} rows/s".format(self.logger.monitor_count * 2, average)
+            status = f"{self.logger.monitor_count * 2} rows/s, average: {average} rows/s"
             if self.logger.monitor_count == 0:
                 continue
             self.speed_readout.emit(status)

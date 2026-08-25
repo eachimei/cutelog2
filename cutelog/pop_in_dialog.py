@@ -1,5 +1,5 @@
 from qtpy.QtCore import Signal
-from qtpy.QtWidgets import QDialog, QDialogButtonBox, QListWidget, QVBoxLayout
+from qtpy.QtWidgets import QAbstractItemView, QDialog, QDialogButtonBox, QListWidget, QVBoxLayout
 
 
 class PopInDialog(QDialog):
@@ -15,10 +15,11 @@ class PopInDialog(QDialog):
         self.resize(200, 320)
         self.vbox = QVBoxLayout(self)
         self.listWidget = QListWidget(self)
-        self.listWidget.setSelectionMode(self.listWidget.MultiSelection)
+        self.listWidget.setSelectionMode(QAbstractItemView.SelectionMode.MultiSelection)
         self.listWidget.selectionModel().reset()
         self.vbox.addWidget(self.listWidget)
-        self.buttonBox = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel, self)
+        self.buttonBox = QDialogButtonBox(QDialogButtonBox.StandardButton.Ok
+                                          | QDialogButtonBox.StandardButton.Cancel, self)
         self.vbox.addWidget(self.buttonBox)
 
         self.buttonBox.accepted.connect(self.accept)
