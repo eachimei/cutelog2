@@ -45,7 +45,7 @@ class MainWindow(QMainWindow):
 
     def setupUi(self):
         self.resize(800, 600)
-        self.setWindowTitle('cutelog')
+        self.setWindowTitle('cutelog2')
 
         self.loggerTabWidget = QTabWidget(self)
         self.loggerTabWidget.setTabsClosable(True)
@@ -116,7 +116,7 @@ class MainWindow(QMainWindow):
 
         # Help menu
         self.menuHelp = self.menubar.addMenu("Help")
-        self.actionAbout = self.menuHelp.addAction("About cutelog")
+        self.actionAbout = self.menuHelp.addAction("About cutelog2")
 
         self.change_actions_state()  # to disable all logger actions, since they don't function yet
 
@@ -460,7 +460,7 @@ class MainWindow(QMainWindow):
         logger.destroyed.connect(logger.closeEvent)
         logger.setAttribute(Qt.WidgetAttribute.WA_DeleteOnClose, True)
         logger.setWindowFlags(Qt.WindowType.Window)
-        logger.setWindowTitle(f'cutelog: "{self.loggerTabWidget.tabText(index)}"')
+        logger.setWindowTitle(f'cutelog2: "{self.loggerTabWidget.tabText(index)}"')
         self.popped_out_loggers[logger.name] = logger
         self.loggerTabWidget.removeTab(index)
         logger.popped_out = True

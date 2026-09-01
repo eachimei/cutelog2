@@ -10,7 +10,10 @@ readme = { file = "README.rst", content-type = "text/x-rst" }
 requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
-authors = [{ name = "Alexander Bus", email = "busfromrus@gmail.com" }]
+# Fork of cutelog, originally written by Alexander Bus. See LICENSE and the README
+# for attribution; upstream is not involved in this package and shouldn't receive
+# its bug reports.
+authors = [{ name = "eachimei" }]
 keywords = ["log", "logging", "gui", "qt"]
 classifiers = [
     "Development Status :: 4 - Beta",

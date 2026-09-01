@@ -2,7 +2,7 @@ import os
 import sys
 
 # qtpy defaults to PyQt5 first if it happens to be importable, even when PyQt6
-# is also installed. Steer it to a binding cutelog actually supports, unless
+# is also installed. Steer it to a binding cutelog2 actually supports, unless
 # the environment has already made an explicit choice via QT_API.
 os.environ.setdefault('QT_API', 'pyqt6')
 
@@ -19,7 +19,7 @@ def _fail_with_message(message):
     if sys.platform == 'win32':
         import ctypes
         MB_ICONERROR = 0x10
-        ctypes.windll.user32.MessageBoxW(0, message, "cutelog: incompatible Qt binding",
+        ctypes.windll.user32.MessageBoxW(0, message, "cutelog2: incompatible Qt binding",
                                          MB_ICONERROR)
     sys.exit(message)
 
@@ -28,13 +28,13 @@ if not qtpy.PYQT6 and not qtpy.PYSIDE6:
     detected = f'{qtpy.API_NAME} {qtpy.QT_VERSION}'
     if sys.platform == 'linux':
         _fail_with_message(
-            f"Error: cutelog requires PyQt6 or PySide6, but qtpy loaded {detected}.\n"
+            f"Error: cutelog2 requires PyQt6 or PySide6, but qtpy loaded {detected}.\n"
             "Please install python3-pyqt6 (or just python-pyqt6) from your package manager.\n"
             "If another Qt binding is also installed, set the QT_API environment variable "
             "to 'pyqt6' or 'pyside6'.")
     else:  # this technically shouldn't ever happen
         _fail_with_message(
-            f"Error: cutelog requires PyQt6 or PySide6, but qtpy loaded {detected}.\n"
+            f"Error: cutelog2 requires PyQt6 or PySide6, but qtpy loaded {detected}.\n"
             "Please install it by running `pip install pyqt6`.\n"
             "If another Qt binding is also installed, set the QT_API environment variable "
             "to 'pyqt6' or 'pyside6'.")
@@ -52,7 +52,9 @@ def main():
 
     if sys.platform == 'win32':
         import ctypes
-        appid = 'busimus.cutelog'
+        # Must differ from upstream cutelog's ID, or Windows groups both apps under
+        # one taskbar button and icon when they're installed side by side.
+        appid = 'cutelog2.cutelog2'
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(appid)
 
     app = QApplication(sys.argv)
