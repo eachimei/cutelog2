@@ -25,7 +25,7 @@ regular Go logging libraries to connect to cutelog.
 ## Screenshots
 Light theme | Dark theme
 ------------|-----------
-<img src="https://raw.githubusercontent.com/eachimei/cutelog/master/screenshots/main_light.png" width="240"> | <img src="https://raw.githubusercontent.com/eachimei/cutelog/master/screenshots/main_dark.png" width="240">
+<img src="https://raw.githubusercontent.com/eachimei/cutelog2/master/screenshots/main_light.png" width="240"> | <img src="https://raw.githubusercontent.com/eachimei/cutelog2/master/screenshots/main_dark.png" width="240">
 
 ## Installation
 **If you're using Linux**, install PyQt6 (or PySide6) from your package manager before installing cutelog2 (package name is probably ``python3-pyqt6`` or ``python-pyqt6``). Or just run ``pip install pyqt6`` to install it from pip, which is sub-optimal.
@@ -36,7 +36,7 @@ $ pip install cutelog2
 Or install the latest development version from the source:
 
 ```
-$ pip install git+https://github.com/eachimei/cutelog.git
+$ pip install git+https://github.com/eachimei/cutelog2.git
 ```
 
 ### Requirements

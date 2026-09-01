@@ -49,9 +49,9 @@ test = ["pytest>=8", "pytest-qt>=4.4", "pytest-cov"]
 dev = ["cutelog2[test]", "ruff>=0.6", "build"]
 
 [project.urls]
-Homepage = "https://github.com/eachimei/cutelog/"
-Source = "https://github.com/eachimei/cutelog/"
-Issues = "https://github.com/eachimei/cutelog/issues"
+Homepage = "https://github.com/eachimei/cutelog2/"
+Source = "https://github.com/eachimei/cutelog2/"
+Issues = "https://github.com/eachimei/cutelog2/issues"
 
 [project.gui-scripts]
 cutelog2 = "cutelog2.__main__:main"

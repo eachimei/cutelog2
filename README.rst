@@ -33,7 +33,7 @@ Installation
 
 Or install the latest development version from the source::
 
-    $ pip install git+https://github.com/eachimei/cutelog.git
+    $ pip install git+https://github.com/eachimei/cutelog2.git
 
 Requirements
 ------------
@@ -63,4 +63,4 @@ This will create "log namespaces" which allow you to filter out messages from va
 
 Code, issues, changelog
 =======================
-Visit the project's `GitHub page <https://github.com/eachimei/cutelog>`_.
+Visit the project's `GitHub page <https://github.com/eachimei/cutelog2>`_.
