@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cutelog2"
-version = "1.0.0"
+version = "1.1.0"
 description = "GUI for Python's logging module (PyQt6/PySide6 fork of cutelog)"
 readme = { file = "README.rst", content-type = "text/x-rst" }
 requires-python = ">=3.10"
@@ -36,12 +36,15 @@ classifiers = [
 ]
 dependencies = [
     "qtpy>=2.4",
+    # PySide6 is LGPLv3, so it imposes no licence obligation on users of this MIT app.
     # On Linux the distro-supplied Qt package is preferred over the PyPI wheel.
-    'PyQt6>=6.4; platform_system != "Linux"',
+    'PySide6>=6.4; platform_system != "Linux"',
     "jsonstream==0.0.1",
 ]
 
 [project.optional-dependencies]
+# PyQt6 is fully supported and covered by CI; it is GPLv3, hence not the default.
+pyqt6 = ["PyQt6>=6.4"]
 msgpack = ["msgpack"]
 cbor = ["cbor2"]
 color = ["colorlog"]
@@ -70,6 +73,18 @@ cutelog2 = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra"
+# Qt reports object-lifetime and threading errors through its own message handler, not as
+# Python exceptions, so they would otherwise scroll past a passing run. These are exactly
+# the failures that differ between PyQt6 and PySide6.
+qt_log_level_fail = "WARNING"
+qt_log_ignore = [
+    "^QStandardPaths: XDG_RUNTIME_DIR",
+    "^Wayland does not support",
+    # Qt stopped shipping fonts; the wheels have no font directory to find.
+    "^QFontDatabase: Cannot find font directory",
+    # Limitation of the offscreen platform plugin, not of the application.
+    "^This plugin does not support propagateSizeHints",
+]
 
 [tool.ruff]
 line-length = 100

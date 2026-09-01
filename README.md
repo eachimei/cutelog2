@@ -31,7 +31,7 @@ Light theme | Dark theme
 <img src="https://raw.githubusercontent.com/eachimei/cutelog2/master/screenshots/main_light.png" width="240"> | <img src="https://raw.githubusercontent.com/eachimei/cutelog2/master/screenshots/main_dark.png" width="240">
 
 ## Installation
-**If you're using Linux**, install PyQt6 (or PySide6) from your package manager before installing cutelog2 (package name is probably ``python3-pyqt6`` or ``python-pyqt6``). Or just run ``pip install pyqt6`` to install it from pip, which is sub-optimal.
+**If you're using Linux**, install PySide6 (or PyQt6) from your package manager before installing cutelog2 (package name is probably ``python3-pyside6`` or ``python-pyside6``). Or just run ``pip install pyside6`` to install it from pip, which is sub-optimal.
 
 ```
 $ pip install cutelog2
@@ -42,9 +42,28 @@ Or install the latest development version from the source:
 $ pip install git+https://github.com/eachimei/cutelog2.git
 ```
 
+### Choosing a Qt binding
+cutelog2 runs on either PySide6 or PyQt6, and both are covered by CI. PySide6 is installed
+by default because it's [LGPLv3](https://doc.qt.io/qtforpython-6/licenses.html), so it
+places no licensing obligation on you; PyQt6 is
+[GPLv3 or commercial](https://riverbankcomputing.com/commercial/pyqt).
+
+To use PyQt6 instead:
+
+```
+$ pip install cutelog2[pyqt6]
+```
+
+If both are installed, cutelog2 prefers PySide6. Override with the ``QT_API`` environment
+variable, which accepts ``pyside6`` or ``pyqt6``:
+
+```
+$ QT_API=pyqt6 cutelog2
+```
+
 ### Requirements
 * Python 3.10 (or newer)
-* PyQt6 or PySide6
+* PySide6 or PyQt6
 * [QtPy](https://github.com/spyder-ide/qtpy) 2.4 or newer
 
 ### Desktop entry (Linux)
