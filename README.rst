@@ -5,10 +5,26 @@
 cutelog2
 ========
 
+.. image:: https://img.shields.io/pypi/v/cutelog2.svg?style=flat-square
+   :target: https://pypi.org/project/cutelog2/
+   :alt: PyPI
+
+.. image:: https://img.shields.io/pypi/pyversions/cutelog2.svg?style=flat-square
+   :target: https://pypi.org/project/cutelog2/
+   :alt: Python versions
+
+.. image:: https://img.shields.io/github/actions/workflow/status/eachimei/cutelog2/ci.yml?branch=master&style=flat-square&label=CI
+   :target: https://github.com/eachimei/cutelog2/actions/workflows/ci.yml
+   :alt: CI
+
+.. image:: https://img.shields.io/pypi/l/cutelog2.svg?style=flat-square
+   :target: https://github.com/eachimei/cutelog2/blob/master/LICENSE
+   :alt: License
+
 cutelog2 is a PyQt6/PySide6 fork of `cutelog <https://github.com/busimus/cutelog>`_ by
 Alexander Bus, a graphical log viewer for Python's standard logging module. It's
 unaffiliated with the original project; see the
-`migration PR <https://github.com/busimus/cutelog/pull/52>`_ for what changed and why.
+`migration PR <https://github.com/busimus/cutelog/pull/53>`_ for what changed and why.
 It can be targeted with a SocketHandler with no additional setup (see Usage_).
 cutelog2 is cross-platform, although it's mainly written and optimized for Linux.
 
