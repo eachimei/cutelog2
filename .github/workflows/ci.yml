@@ -64,11 +64,11 @@ jobs:
           wheel = glob.glob('dist/*.whl')[0]
           names = zipfile.ZipFile(wheel).namelist()
           required = [
-              'cutelog/resources/dark_theme.qss',
-              'cutelog/resources/light_theme.qss',
-              'cutelog/resources/ui/logger.ui',
-              'cutelog/resources/images/cutelog.png',
-              'cutelog/resources/icons/dark_theme/ion-check.svg',
+              'cutelog2/resources/dark_theme.qss',
+              'cutelog2/resources/light_theme.qss',
+              'cutelog2/resources/ui/logger.ui',
+              'cutelog2/resources/images/cutelog.png',
+              'cutelog2/resources/icons/dark_theme/ion-check.svg',
           ]
           missing = [n for n in required if n not in names]
           assert not missing, f'missing from wheel: {missing}'

@@ -1,8 +1,8 @@
 import pytest
 from qtpy.QtGui import QValidator
 
-from cutelog.level_edit_dialog import LevelNameValidator
-from cutelog.settings_dialog import TimeFormatValidator
+from cutelog2.level_edit_dialog import LevelNameValidator
+from cutelog2.settings_dialog import TimeFormatValidator
 
 
 @pytest.mark.parametrize('name, expected', [

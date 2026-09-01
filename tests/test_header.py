@@ -1,6 +1,6 @@
 from qtpy.QtCore import Qt
 
-from cutelog.logger_table_header import ColumnListItem, HeaderEditDialog
+from cutelog2.logger_table_header import ColumnListItem, HeaderEditDialog
 
 
 def test_check_state_round_trips(qtbot, table_header):

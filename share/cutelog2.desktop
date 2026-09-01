@@ -1,8 +1,8 @@
 [Desktop Entry]
-Name=cutelog
+Name=cutelog2
 Comment=GUI for Python's logging module
-Exec=bash -c 'export PATH="$PATH:~/.local/bin"; cutelog'
-Icon=cutelog
+Exec=bash -c 'export PATH="$PATH:~/.local/bin"; cutelog2'
+Icon=cutelog2
 Type=Application
 Terminal=false
 Categories=Development

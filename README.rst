@@ -1,13 +1,16 @@
 .. contents:: Table of contents
    :depth: 2
 
-=======
-cutelog
-=======
+========
+cutelog2
+========
 
-This is a graphical log viewer for Python's standard logging module.
+cutelog2 is a PyQt6/PySide6 fork of `cutelog <https://github.com/busimus/cutelog>`_ by
+Alexander Bus, a graphical log viewer for Python's standard logging module. It's
+unaffiliated with the original project; see the
+`migration PR <https://github.com/busimus/cutelog/pull/52>`_ for what changed and why.
 It can be targeted with a SocketHandler with no additional setup (see Usage_).
-cutelog is cross-platform, although it's mainly written and optimized for Linux.
+cutelog2 is cross-platform, although it's mainly written and optimized for Linux.
 
 Features
 ========
@@ -23,14 +26,14 @@ Features
 
 Installation
 ============
-**If you're using Linux**, install PyQt6 (or PySide6) from your package manager before installing cutelog (package name is probably ``python3-pyqt6`` or ``python-pyqt6``). Or just run ``pip install pyqt6`` to install it from pip, which is sub-optimal.
+**If you're using Linux**, install PyQt6 (or PySide6) from your package manager before installing cutelog2 (package name is probably ``python3-pyqt6`` or ``python-pyqt6``). Or just run ``pip install pyqt6`` to install it from pip, which is sub-optimal.
 ::
 
-    $ pip install --upgrade cutelog
+    $ pip install --upgrade cutelog2
 
 Or install the latest development version from the source::
 
-    $ pip install git+https://github.com/busimus/cutelog.git
+    $ pip install git+https://github.com/eachimei/cutelog.git
 
 Requirements
 ------------
@@ -40,7 +43,7 @@ Requirements
 
 Usage
 =====
-1. Start `cutelog`
+1. Start `cutelog2`
 
 2. Put the following into your code:
 
@@ -60,4 +63,4 @@ This will create "log namespaces" which allow you to filter out messages from va
 
 Code, issues, changelog
 =======================
-Visit the project's `GitHub page <https://github.com/busimus/cutelog>`_.
+Visit the project's `GitHub page <https://github.com/eachimei/cutelog>`_.

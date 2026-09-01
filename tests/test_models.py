@@ -2,7 +2,7 @@ import pytest
 from qtpy.QtCore import Qt
 from qtpy.QtGui import QBrush, QColor, QFont, QIcon
 
-from cutelog.config import CONFIG, Exc_Indication
+from cutelog2.config import CONFIG, Exc_Indication
 
 ROLES = [
     Qt.ItemDataRole.DisplayRole,

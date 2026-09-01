@@ -1,7 +1,7 @@
 from qtpy.QtGui import QGuiApplication
 from qtpy.QtWidgets import QWidget
 
-from cutelog.utils import center_widget_on_screen
+from cutelog2.utils import center_widget_on_screen
 
 
 def test_center_widget_on_screen(qtbot):

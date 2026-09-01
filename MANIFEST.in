@@ -1,6 +1,6 @@
 graft share
 graft tests
-recursive-include cutelog/resources *
+recursive-include cutelog2/resources *
 include README.rst
 include README.md
 global-exclude __pycache__ *.py[cod]

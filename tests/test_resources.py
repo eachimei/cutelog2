@@ -2,7 +2,7 @@ import re
 
 import pytest
 
-from cutelog.resources_loader import APP_ICON_PATH, ICON_DIR, RESOURCE_DIR, UI_DIR, get_ui_path
+from cutelog2.resources_loader import APP_ICON_PATH, ICON_DIR, RESOURCE_DIR, UI_DIR, get_ui_path
 
 UI_FILES = ['about_dialog.ui', 'logger.ui', 'settings_dialog.ui']
 STYLESHEETS = ['dark_theme.qss', 'light_theme.qss']
@@ -27,7 +27,7 @@ def test_get_ui_path_rejects_missing_file():
 
 @pytest.mark.parametrize('name', STYLESHEETS)
 def test_stylesheet_icon_urls_resolve(name):
-    from cutelog.resources_loader import get_stylesheet
+    from cutelog2.resources_loader import get_stylesheet
 
     urls = URL_RE.findall(get_stylesheet(name))
     assert urls, f'{name} has no url() references'

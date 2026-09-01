@@ -4,15 +4,15 @@ from types import SimpleNamespace
 import pytest
 from qtpy.QtWidgets import QDialog
 
-from cutelog.about_dialog import AboutDialog
-from cutelog.level_edit_dialog import LevelEditDialog
-from cutelog.levels_preset_dialog import LevelsPresetDialog
-from cutelog.log_levels import DEFAULT_LEVELS, LogLevel
-from cutelog.logger_table_header import CreateNewColumnDialog, HeaderEditDialog
-from cutelog.merge_dialog import MergeDialog
-from cutelog.pop_in_dialog import PopInDialog
-from cutelog.settings_dialog import SettingsDialog
-from cutelog.text_view_dialog import TextViewDialog
+from cutelog2.about_dialog import AboutDialog
+from cutelog2.level_edit_dialog import LevelEditDialog
+from cutelog2.levels_preset_dialog import LevelsPresetDialog
+from cutelog2.log_levels import DEFAULT_LEVELS, LogLevel
+from cutelog2.logger_table_header import CreateNewColumnDialog, HeaderEditDialog
+from cutelog2.merge_dialog import MergeDialog
+from cutelog2.pop_in_dialog import PopInDialog
+from cutelog2.settings_dialog import SettingsDialog
+from cutelog2.text_view_dialog import TextViewDialog
 
 
 @pytest.fixture

@@ -4,8 +4,8 @@ from logging.handlers import SocketHandler
 
 import pytest
 
-from cutelog.config import CONFIG, ROOT_LOG
-from cutelog.listener import LogServer
+from cutelog2.config import CONFIG, ROOT_LOG
+from cutelog2.listener import LogServer
 
 
 @pytest.fixture
