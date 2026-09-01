@@ -3,14 +3,17 @@ requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "cutelog"
-version = "3.0.0"
-description = "GUI for Python's logging module"
+name = "cutelog2"
+version = "1.0.0"
+description = "GUI for Python's logging module (PyQt6/PySide6 fork of cutelog)"
 readme = { file = "README.rst", content-type = "text/x-rst" }
 requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE"]
-authors = [{ name = "Alexander Bus", email = "busfromrus@gmail.com" }]
+# Fork of cutelog, originally written by Alexander Bus. See LICENSE and the README
+# for attribution; upstream is not involved in this package and shouldn't receive
+# its bug reports.
+authors = [{ name = "eachimei" }]
 keywords = ["log", "logging", "gui", "qt"]
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -43,21 +46,21 @@ msgpack = ["msgpack"]
 cbor = ["cbor2"]
 color = ["colorlog"]
 test = ["pytest>=8", "pytest-qt>=4.4", "pytest-cov"]
-dev = ["cutelog[test]", "ruff>=0.6", "build"]
+dev = ["cutelog2[test]", "ruff>=0.6", "build"]
 
 [project.urls]
-Homepage = "https://github.com/busimus/cutelog/"
-Source = "https://github.com/busimus/cutelog/"
-Issues = "https://github.com/busimus/cutelog/issues"
+Homepage = "https://github.com/eachimei/cutelog/"
+Source = "https://github.com/eachimei/cutelog/"
+Issues = "https://github.com/eachimei/cutelog/issues"
 
 [project.gui-scripts]
-cutelog = "cutelog.__main__:main"
+cutelog2 = "cutelog2.__main__:main"
 
 [tool.setuptools]
-packages = ["cutelog"]
+packages = ["cutelog2"]
 
 [tool.setuptools.package-data]
-cutelog = [
+cutelog2 = [
     "resources/*.qss",
     "resources/ui/*.ui",
     "resources/icons/*/*.svg",
@@ -71,13 +74,13 @@ addopts = "-ra"
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-src = ["cutelog", "tests"]
+src = ["cutelog2", "tests"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I", "UP", "B", "C4", "SIM", "RUF"]
 
 [tool.ruff.lint.per-file-ignores]
-"cutelog/__init__.py" = ["F401"]
+"cutelog2/__init__.py" = ["F401"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["cutelog"]
+known-first-party = ["cutelog2"]

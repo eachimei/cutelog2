@@ -1,10 +1,10 @@
 from qtpy.QtCore import QCoreApplication
 
-from cutelog.config import CONFIG, OPTION_SPEC, Config
+from cutelog2.config import CONFIG, OPTION_SPEC, Config
 
 
 def test_qt_application_identity():
-    assert QCoreApplication.applicationName() == 'cutelog'
+    assert QCoreApplication.applicationName() == 'cutelog2'
     assert QCoreApplication.applicationVersion()
 
 

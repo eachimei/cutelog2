@@ -8,9 +8,9 @@ os.environ.setdefault('QT_QPA_PLATFORM', 'offscreen')
 import pytest
 from qtpy.QtCore import QSettings
 
-# cutelog.config builds a QSettings at import time, so the sandbox has to exist before
-# any cutelog module is imported.
-_SETTINGS_DIR = tempfile.mkdtemp(prefix='cutelog-tests-')
+# cutelog2.config builds a QSettings at import time, so the sandbox has to exist before
+# any cutelog2 module is imported.
+_SETTINGS_DIR = tempfile.mkdtemp(prefix='cutelog2-tests-')
 QSettings.setDefaultFormat(QSettings.Format.IniFormat)
 for _scope in (QSettings.Scope.UserScope, QSettings.Scope.SystemScope):
     QSettings.setPath(QSettings.Format.IniFormat, _scope, _SETTINGS_DIR)
@@ -28,7 +28,7 @@ def settings_dir():
 @pytest.fixture
 def make_record():
     """Builds LogRecords the way a SocketHandler client would send them."""
-    from cutelog.logger_tab import LogRecord
+    from cutelog2.logger_tab import LogRecord
 
     def _make(message='hello', levelname='INFO', name='root', **extra):
         data = {'message': message, 'levelname': levelname, 'name': name}
@@ -42,7 +42,7 @@ def make_record():
 def table_header(qtbot):
     from qtpy.QtWidgets import QTableView
 
-    from cutelog.logger_table_header import LoggerTableHeader
+    from cutelog2.logger_table_header import LoggerTableHeader
 
     view = QTableView()
     qtbot.addWidget(view)
@@ -55,8 +55,8 @@ def table_header(qtbot):
 def record_model(qtbot, table_header):
     from qtpy.QtWidgets import QWidget
 
-    from cutelog.log_levels import LevelFilter
-    from cutelog.logger_tab import LogRecordModel
+    from cutelog2.log_levels import LevelFilter
+    from cutelog2.logger_tab import LogRecordModel
 
     parent = QWidget()
     qtbot.addWidget(parent)
@@ -68,7 +68,7 @@ def record_model(qtbot, table_header):
 
 @pytest.fixture
 def filter_model(qtbot, record_model):
-    from cutelog.logger_tab import LogNamespaceTreeModel, RecordFilter
+    from cutelog2.logger_tab import LogNamespaceTreeModel, RecordFilter
 
     proxy = RecordFilter(record_model.parent_widget, LogNamespaceTreeModel(),
                          record_model.level_filter)

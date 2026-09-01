@@ -1,8 +1,8 @@
 import pytest
 from qtpy.QtWidgets import QAbstractItemView
 
-from cutelog.config import ROOT_LOG
-from cutelog.logger_tab import LoggerTab
+from cutelog2.config import ROOT_LOG
+from cutelog2.logger_tab import LoggerTab
 
 
 @pytest.fixture

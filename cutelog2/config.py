@@ -358,9 +358,8 @@ class Config(QObject):
 
 
 def init_qt_info():
-    QCoreApplication.setOrganizationName('busimus')
-    QCoreApplication.setOrganizationDomain('busz.me')
-    QCoreApplication.setApplicationName('cutelog')
+    QCoreApplication.setOrganizationName('cutelog2')
+    QCoreApplication.setApplicationName('cutelog2')
     try:
         version = get_version(QCoreApplication.applicationName())
     except PackageNotFoundError:
