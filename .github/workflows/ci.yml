@@ -26,6 +26,9 @@ jobs:
         include:
           - os: windows-latest
             python-version: "3.13"
+            qt-binding: PySide6
+          - os: windows-latest
+            python-version: "3.13"
             qt-binding: PyQt6
     runs-on: ${{ matrix.os }}
     env:
