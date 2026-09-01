@@ -47,6 +47,32 @@ jobs:
       - run: pip install -e ".[test,msgpack,cbor]" ${{ matrix.qt-binding }}
       - run: pytest -ra
 
+  # The offscreen platform does no real window management, so widget reparenting and
+  # window flags (tab pop-out) are not meaningfully exercised there.
+  test-xvfb:
+    strategy:
+      fail-fast: false
+      matrix:
+        qt-binding: [PyQt6, PySide6]
+    runs-on: ubuntu-latest
+    env:
+      QT_QPA_PLATFORM: xcb
+      QT_API: ${{ matrix.qt-binding }}
+      PYTEST_QT_API: ${{ matrix.qt-binding }}
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - name: Install Qt runtime dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y xvfb libegl1 libgl1 libxkbcommon-x11-0 libxcb-cursor0 \
+            libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 \
+            libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 libdbus-1-3
+      - run: pip install -e ".[test,msgpack,cbor]" ${{ matrix.qt-binding }}
+      - run: xvfb-run -a pytest -ra
+
   build:
     runs-on: ubuntu-latest
     steps:

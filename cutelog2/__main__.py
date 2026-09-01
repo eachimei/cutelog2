@@ -1,10 +1,16 @@
+import importlib.util
 import os
 import sys
 
-# qtpy defaults to PyQt5 first if it happens to be importable, even when PyQt6
-# is also installed. Steer it to a binding cutelog2 actually supports, unless
-# the environment has already made an explicit choice via QT_API.
-os.environ.setdefault('QT_API', 'pyqt6')
+# qtpy picks PyQt5 when it is importable, even if a Qt6 binding is also installed, so the
+# choice has to be made before qtpy is imported. PySide6 is the declared dependency, but
+# a PyQt6-only install must keep working -- picking an installed binding here avoids the
+# fallback warning qtpy would otherwise print on every launch.
+if 'QT_API' not in os.environ:
+    for _api, _module in (('pyside6', 'PySide6'), ('pyqt6', 'PyQt6')):
+        if importlib.util.find_spec(_module) is not None:
+            os.environ['QT_API'] = _api
+            break
 
 import qtpy
 
@@ -29,15 +35,15 @@ if not qtpy.PYQT6 and not qtpy.PYSIDE6:
     if sys.platform == 'linux':
         _fail_with_message(
             f"Error: cutelog2 requires PyQt6 or PySide6, but qtpy loaded {detected}.\n"
-            "Please install python3-pyqt6 (or just python-pyqt6) from your package manager.\n"
+            "Please install python3-pyside6 (or python3-pyqt6) from your package manager.\n"
             "If another Qt binding is also installed, set the QT_API environment variable "
-            "to 'pyqt6' or 'pyside6'.")
+            "to 'pyside6' or 'pyqt6'.")
     else:  # this technically shouldn't ever happen
         _fail_with_message(
             f"Error: cutelog2 requires PyQt6 or PySide6, but qtpy loaded {detected}.\n"
-            "Please install it by running `pip install pyqt6`.\n"
+            "Please install it by running `pip install pyside6`.\n"
             "If another Qt binding is also installed, set the QT_API environment variable "
-            "to 'pyqt6' or 'pyside6'.")
+            "to 'pyside6' or 'pyqt6'.")
 
 
 def main():
