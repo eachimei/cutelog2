@@ -15,7 +15,7 @@ from qtpy.QtCore import (
     Signal,
 )
 
-if sys.platform == 'win':
+if sys.platform == 'win32':
     DEFAULT_FONT = 'MS Shell Dlg 2'
 elif sys.platform == 'darwin':
     DEFAULT_FONT = 'Helvetica Neue'
@@ -415,3 +415,4 @@ init_qt_info()
 ROOT_LOG = init_logging()
 CONFIG = Config(ROOT_LOG)
 CONFIG.post_init()
+

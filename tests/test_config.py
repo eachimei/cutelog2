@@ -8,6 +8,23 @@ def test_qt_application_identity():
     assert QCoreApplication.applicationVersion()
 
 
+def test_default_font_matches_the_running_platform():
+    """sys.platform is 'win32' on Windows, never 'win' -- a prior typo silently fell
+    through to the 'Sans' default on every Windows install. The Windows CI leg is what
+    makes this assertion meaningful rather than vacuous.
+    """
+    import sys
+
+    from cutelog2.config import DEFAULT_FONT
+
+    if sys.platform == 'win32':
+        assert DEFAULT_FONT == 'MS Shell Dlg 2'
+    elif sys.platform == 'darwin':
+        assert DEFAULT_FONT == 'Helvetica Neue'
+    else:
+        assert DEFAULT_FONT == 'Sans'
+
+
 def test_settings_are_sandboxed(settings_dir):
     expected = settings_dir.replace('\\', '/')
     assert CONFIG.qsettings.fileName().replace('\\', '/').startswith(expected)
