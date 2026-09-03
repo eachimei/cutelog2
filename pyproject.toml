@@ -36,9 +36,12 @@ classifiers = [
 ]
 dependencies = [
     "qtpy>=2.4",
-    # PySide6 is LGPLv3, so it imposes no licence obligation on users of this MIT app.
+    # PySide6-Essentials covers everything this app uses (QtCore/Gui/Widgets/Network/
+    # UiTools); the full PySide6 wheel also pulls in PySide6-Addons (WebEngine, Qt3D,
+    # Charts, ...), which roughly triples the install size for modules cutelog2 never
+    # imports. LGPLv3, so it imposes no licence obligation on users of this MIT app.
     # On Linux the distro-supplied Qt package is preferred over the PyPI wheel.
-    'PySide6>=6.4; platform_system != "Linux"',
+    'PySide6-Essentials>=6.4; platform_system != "Linux"',
     "jsonstream==0.0.1",
 ]
 
