@@ -1,11 +1,37 @@
+import datetime
 import logging
+import pickle
 import struct
 from logging.handlers import SocketHandler
 
 import pytest
 
 from cutelog2.config import CONFIG, ROOT_LOG
-from cutelog2.listener import LogServer
+from cutelog2.listener import LogServer, safe_pickle_loads
+
+EXPLOITED = []
+
+
+def _exploit(*args):
+    EXPLOITED.append(args)
+    return 'exploited'
+
+
+class Exploit:
+    """Unpickling this with plain pickle.loads calls _exploit -- a stand-in for os.system."""
+
+    def __reduce__(self):
+        return (_exploit, ('payload ran',))
+
+
+class Custom:
+    def __init__(self):
+        self.value = 42
+
+
+@pytest.fixture(autouse=True)
+def _reset_exploited():
+    EXPLOITED.clear()
 
 
 @pytest.fixture
@@ -78,3 +104,82 @@ def test_malformed_length_prefix_does_not_crash(qtbot, server):
             sock.close()
     finally:
         sock.close()
+
+
+def test_exploit_payload_is_real():
+    """Guards the tests below against a vacuous pass: plain pickle does run the payload."""
+    pickle.loads(pickle.dumps({'msg': Exploit()}, 1))
+    assert EXPLOITED == [('payload ran',)]
+
+
+@pytest.mark.parametrize('protocol', range(pickle.HIGHEST_PROTOCOL + 1))
+def test_pickle_payload_cannot_run_code(protocol):
+    loaded = safe_pickle_loads(pickle.dumps({'msg': 'hi', 'evil': Exploit()}, protocol))
+
+    assert EXPLOITED == []
+    assert loaded['msg'] == 'hi'
+    assert repr(loaded['evil']) == f'<{__name__}._exploit>'
+
+
+@pytest.mark.parametrize('protocol', range(pickle.HIGHEST_PROTOCOL + 1))
+def test_unknown_classes_become_placeholders(protocol):
+    from cutelog2.listener import _Placeholder
+
+    loaded = safe_pickle_loads(pickle.dumps({'obj': Custom(), 'items': [Custom()]}, protocol))
+
+    # Protocols 0-1 route through copyreg._reconstructor, 2+ name the class directly.
+    assert isinstance(loaded['obj'], _Placeholder)
+    assert not hasattr(loaded['obj'], 'value')
+    assert len(loaded['items']) == 1
+
+
+def test_socket_handler_payload_round_trips():
+    handler = SocketHandler('127.0.0.1', 0)
+    record = make_log_record('plain')
+    record.when = datetime.datetime(2026, 1, 2, 3, 4, 5)
+    data = handler.makePickle(record)[4:]  # strip the length prefix
+
+    loaded = safe_pickle_loads(data)
+
+    assert loaded == pickle.loads(data)
+    assert loaded['when'] == datetime.datetime(2026, 1, 2, 3, 4, 5)
+
+
+@pytest.mark.parametrize('protocol', range(pickle.HIGHEST_PROTOCOL + 1))
+def test_safe_types_round_trip(protocol):
+    import decimal
+
+    value = {
+        'dt': datetime.datetime(2026, 1, 2, tzinfo=datetime.timezone.utc),
+        'd': datetime.date(2026, 1, 2), 't': datetime.time(3, 4), 'td': datetime.timedelta(5),
+        'dec': decimal.Decimal('1.5'), 's': {1, 2}, 'fs': frozenset({3}), 'b': b'\xff\x00',
+    }
+    assert safe_pickle_loads(pickle.dumps(value, protocol)) == value
+
+
+def test_codecs_encode_is_restricted_to_latin1():
+    class Sneaky:
+        def __reduce__(self):
+            import _codecs
+            return (_codecs.encode, ('x', 'rot13'))
+
+    with pytest.raises(pickle.UnpicklingError):
+        safe_pickle_loads(pickle.dumps(Sneaky(), 2))
+
+
+def test_exploit_over_tcp_still_delivers_record(qtbot, server):
+    import socket
+
+    payload = pickle.dumps({'msg': 'carrier', 'levelname': 'INFO', 'evil': Exploit()}, 1)
+    sock = socket.create_connection(('127.0.0.1', server.serverPort()))
+    try:
+        qtbot.waitUntil(lambda: bool(server.connections), timeout=5000)
+        conn = server.connections[0]
+        with qtbot.waitSignal(conn.new_record, timeout=5000):
+            sock.sendall(struct.pack('>L', len(payload)) + payload)
+    finally:
+        sock.close()
+
+    assert EXPLOITED == []
+    assert server.received[0].message == 'carrier'
+    assert server.received[0].evil == f'<{__name__}._exploit>'

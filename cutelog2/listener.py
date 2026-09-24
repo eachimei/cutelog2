@@ -1,3 +1,4 @@
+import io
 import json
 import pickle
 import struct
@@ -15,6 +16,64 @@ from qtpy.QtNetwork import (
 from .config import CBOR_SUPPORT, CONFIG, MSGPACK_SUPPORT
 from .logger_tab import LogRecord
 from .utils import show_critical_dialog
+
+# Only constructors without side effects; everything else becomes a _Placeholder.
+SAFE_PICKLE_GLOBALS = {
+    ('builtins', 'set'), ('builtins', 'frozenset'),
+    # Protocols 0-2 write the Python 2 module name; super().find_class maps it back.
+    ('__builtin__', 'set'), ('__builtin__', 'frozenset'),
+    ('datetime', 'datetime'), ('datetime', 'date'), ('datetime', 'time'),
+    ('datetime', 'timedelta'), ('datetime', 'timezone'),
+    ('decimal', 'Decimal'),
+}
+
+
+class _Placeholder:
+    """Inert stand-in for a refused class, so the rest of the record still arrives."""
+    qualname = ''
+
+    def __new__(cls, *args, **kwargs):
+        return object.__new__(cls)
+
+    def __init__(self, *args, **kwargs):
+        pass
+
+    def __setstate__(self, state):
+        pass
+
+    def append(self, item):
+        pass
+
+    def extend(self, items):
+        pass
+
+    def __setitem__(self, key, value):
+        pass
+
+    def __repr__(self):
+        return f'<{self.qualname}>'
+
+
+class RecordUnpickler(pickle.Unpickler):
+    """Unpickler that can't execute code: arbitrary globals are never imported or called."""
+
+    def find_class(self, module, name):
+        if (module, name) in SAFE_PICKLE_GLOBALS:
+            return super().find_class(module, name)
+        if (module, name) == ('_codecs', 'encode'):
+            return _latin1_encode
+        return type(name, (_Placeholder,), {'qualname': f'{module}.{name}'})
+
+
+def _latin1_encode(text, encoding):
+    # Protocols 0-2 (SocketHandler uses 1) store bytes, e.g. datetime state, this way.
+    if encoding != 'latin1':
+        raise pickle.UnpicklingError(f'refusing _codecs.encode with {encoding!r}')
+    return text.encode('latin1')
+
+
+def safe_pickle_loads(data):
+    return RecordUnpickler(io.BytesIO(data)).load()
 
 
 class LogServer(QTcpServer):
@@ -120,7 +179,7 @@ class LogConnection(QThread):
         return f"{self.__class__.__name__}(id={self.conn_id})"
 
     def setup_serializers(self):
-        self.serializers = {'pickle': pickle.loads, 'json': json.loads}
+        self.serializers = {'pickle': safe_pickle_loads, 'json': json.loads}
         if MSGPACK_SUPPORT:
             from functools import partial
 
