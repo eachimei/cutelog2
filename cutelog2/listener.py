@@ -62,7 +62,20 @@ class RecordUnpickler(pickle.Unpickler):
             return super().find_class(module, name)
         if (module, name) == ('_codecs', 'encode'):
             return _latin1_encode
-        return type(name, (_Placeholder,), {'qualname': f'{module}.{name}'})
+        if name == '_reconstructor' and module in ('copyreg', 'copy_reg'):
+            return _reconstruct_placeholder
+        return _placeholder_class(module, name)
+
+
+def _placeholder_class(module, name):
+    return type(name, (_Placeholder,), {'qualname': f'{module}.{name}'})
+
+
+def _reconstruct_placeholder(cls, *args):
+    # Protocols 0-1 rebuild objects as _reconstructor(cls, base, state); name it after cls.
+    if isinstance(cls, type) and issubclass(cls, _Placeholder):
+        return cls()
+    return _placeholder_class('copyreg', '_reconstructor')()
 
 
 def _latin1_encode(text, encoding):
