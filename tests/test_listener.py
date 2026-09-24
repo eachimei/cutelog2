@@ -123,14 +123,23 @@ def test_pickle_payload_cannot_run_code(protocol):
 
 @pytest.mark.parametrize('protocol', range(pickle.HIGHEST_PROTOCOL + 1))
 def test_unknown_classes_become_placeholders(protocol):
-    from cutelog2.listener import _Placeholder
-
     loaded = safe_pickle_loads(pickle.dumps({'obj': Custom(), 'items': [Custom()]}, protocol))
 
-    # Protocols 0-1 route through copyreg._reconstructor, 2+ name the class directly.
-    assert isinstance(loaded['obj'], _Placeholder)
+    # Protocols 0-1 route through copyreg._reconstructor; the name must still be Custom's.
+    assert repr(loaded['obj']) == f'<{__name__}.Custom>'
     assert not hasattr(loaded['obj'], 'value')
-    assert len(loaded['items']) == 1
+    assert [repr(i) for i in loaded['items']] == [f'<{__name__}.Custom>']
+
+
+def test_reconstructor_with_non_placeholder_class_stays_inert():
+    class Sneaky:
+        def __reduce__(self):
+            import copyreg
+            return (copyreg._reconstructor, (datetime.timedelta, object, None))
+
+    loaded = safe_pickle_loads(pickle.dumps(Sneaky(), 2))
+
+    assert repr(loaded) == '<copyreg._reconstructor>'
 
 
 def test_socket_handler_payload_round_trips():
@@ -143,6 +152,16 @@ def test_socket_handler_payload_round_trips():
 
     assert loaded == pickle.loads(data)
     assert loaded['when'] == datetime.datetime(2026, 1, 2, 3, 4, 5)
+
+
+def test_socket_handler_custom_extra_shows_class_name():
+    handler = SocketHandler('127.0.0.1', 0)
+    record = make_log_record('with extra')
+    record.custom = Custom()
+
+    loaded = safe_pickle_loads(handler.makePickle(record)[4:])
+
+    assert repr(loaded['custom']) == f'<{__name__}.Custom>'
 
 
 @pytest.mark.parametrize('protocol', range(pickle.HIGHEST_PROTOCOL + 1))
