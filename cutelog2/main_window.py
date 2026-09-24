@@ -1,3 +1,5 @@
+import io
+import sys
 from datetime import datetime
 
 from qtpy.QtCore import Qt, QThread, Signal
@@ -21,10 +23,12 @@ from .resources_loader import get_stylesheet
 from .settings_dialog import SettingsDialog
 from .utils import center_widget_on_screen, show_critical_dialog, show_warning_dialog
 
+STDIN_PATH = '-'
+
 
 class MainWindow(QMainWindow):
 
-    def __init__(self, log, app, load_logfiles=()):
+    def __init__(self, log, app, load_logfiles=(), run_server=True, tab_name=None):
         self.log = log.getChild('Main')
         self.app = app
         super().__init__()
@@ -35,13 +39,15 @@ class MainWindow(QMainWindow):
         self.loggers_by_name = {}  # name -> LoggerTab
         self.popped_out_loggers = {}
 
+        self.server = None
         self.server_running = False
         self.shutting_down = False
 
         self.setupUi()
         for filename in load_logfiles:
-            self.load_records(filename)
-        self.start_server()
+            self.load_records(filename, tab_name)
+        if run_server:
+            self.start_server()
 
     def setupUi(self):
         self.resize(800, 600)
@@ -105,7 +111,7 @@ class MainWindow(QMainWindow):
         # Server menu
         self.menuServer = self.menubar.addMenu("Server")
         self.actionRestartServer = self.menuServer.addAction('Restart server')
-        self.actionStartStopServer = self.menuServer.addAction('Stop server')
+        self.actionStartStopServer = self.menuServer.addAction('Start server')
         if CONFIG['benchmark']:
             self.actionStopBenchmark = self.menuServer.addAction('Stop benchmark')
 
@@ -496,12 +502,12 @@ class MainWindow(QMainWindow):
         d.setWindowTitle('Load records from...')
         d.open()
 
-    def load_records(self, load_path):
+    def load_records(self, load_path, tab_name=None):
         from functools import partial
         progress = QProgressDialog('Loading records...', 'Cancel', 0, 0, parent=self)
         progress.setAutoClose(True)
         progress.forceShow()
-        lt = LoadingThread(load_path, self.log, self)
+        lt = LoadingThread(load_path, self.log, self, tab_name)
         lt.done_loading.connect(self.open_loaded_records)
         lt.loading_error.connect(partial(show_critical_dialog, self, 'Error while loading records'))
         progress.canceled.connect(lt.requestInterruption)
@@ -518,6 +524,8 @@ class MainWindow(QMainWindow):
                 return
             logger_name, records = loaded
             new_logger, index = self.create_logger(None, logger_name)
+            # A loaded file is read from the start, unlike a live stream that is followed.
+            new_logger.autoscroll = False
             new_logger.merge_with_records(records)
             self.loggerTabWidget.setCurrentIndex(index)
             self.set_status(f'Records have been loaded into "{new_logger.name}" tab')
@@ -564,7 +572,7 @@ class MainWindow(QMainWindow):
         try:
             records = logger.record_model.records
             record_list = RecordList(records)
-            with open(path, 'w') as f:
+            with open(path, 'w', encoding='utf-8') as f:
                 json.dump(record_list, f, indent=1)
             self.set_status(f'Records have been saved to "{path}"')
 
@@ -607,9 +615,10 @@ class LoadingThread(QThread):
     done_loading = Signal(object)
     loading_error = Signal(str)
 
-    def __init__(self, load_path, log, parent=None):
+    def __init__(self, load_path, log, parent=None, tab_name=None):
         super().__init__(parent)
         self.load_path = load_path
+        self.tab_name = tab_name
         self.log = log.getChild('LT')
 
     def run(self):
@@ -617,9 +626,10 @@ class LoadingThread(QThread):
         self.log.debug('Starting loading thread')
         records = []
 
-        name = path.basename(self.load_path)
+        from_stdin = self.load_path == STDIN_PATH
+        name = self.tab_name or ('stdin' if from_stdin else path.basename(self.load_path))
         try:
-            with open(self.load_path) as file:
+            with self.open_source(from_stdin) as file:
                 try:
                     records = self.load(file)
                 except Exception as e:
@@ -637,6 +647,15 @@ class LoadingThread(QThread):
             self.done_loading.emit((name, records))
         else:
             self.log.warning("Loading was interrupted")
+
+    def open_source(self, from_stdin):
+        if not from_stdin:
+            # utf-8-sig also accepts the BOM that some Windows tools write
+            return open(self.load_path, encoding='utf-8-sig', errors='replace')
+        if sys.stdin is None:
+            raise OSError('standard input is not available (start with "python -m cutelog2 -")')
+        # Buffered because load() seeks back to retry with jsonstream, and a pipe can't seek.
+        return io.StringIO(sys.stdin.buffer.read().decode('utf-8-sig', errors='replace'))
 
     def load(self, file):
         try:

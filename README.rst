@@ -92,6 +92,27 @@ Usage
 Afterwards it's recommended to designate different loggers for different parts of your program with `log_2 = log.getChild("Child logger")`.
 This will create "log namespaces" which allow you to filter out messages from various subsystems of your program.
 
+The server listens on ``127.0.0.1`` only. To accept records from other machines, set
+"Server listen address" in Settings to ``0.0.0.0``; anyone who can connect can then send records,
+so only do this on a trusted network. Pickled records are decoded without importing any classes,
+so a client can't run code in cutelog2; objects other than basic types show as ``<module.Class>``.
+
+Viewing saved records
+---------------------
+Records saved with File → Save records (a JSON array, or concatenated JSON objects) can be
+opened from the command line. ``-`` reads them from standard input::
+
+    $ cutelog2 records.json
+    $ my_exporter | python -m cutelog2 --no-server --tab-name "nightly run" -
+
+* ``--no-server`` doesn't start the listener, so a viewer doesn't conflict with a live
+  instance on the same port. It can still be started from the Server menu.
+* ``--tab-name NAME`` names the tab instead of using the file name.
+* Loaded records open at the first record rather than scrolled to the end.
+
+On Windows, the ``cutelog2`` launcher has no console and so no standard input; use
+``python -m cutelog2 -`` there.
+
 Code, issues, changelog
 =======================
 Visit the project's `GitHub page <https://github.com/eachimei/cutelog2>`_.

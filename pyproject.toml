@@ -60,7 +60,7 @@ Source = "https://github.com/eachimei/cutelog2/"
 Issues = "https://github.com/eachimei/cutelog2/issues"
 
 [project.gui-scripts]
-cutelog2 = "cutelog2.__main__:main"
+cutelog2 = "cutelog2.app:main"
 
 [tool.setuptools]
 packages = ["cutelog2"]
