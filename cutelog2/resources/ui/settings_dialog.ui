@@ -584,7 +584,7 @@
           </sizepolicy>
          </property>
          <property name="placeholderText">
-          <string>0.0.0.0</string>
+          <string>127.0.0.1</string>
          </property>
         </widget>
        </item>

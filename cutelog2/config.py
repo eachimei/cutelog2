@@ -66,7 +66,8 @@ OPTION_SPEC = (
     ('search_wildcard_default',      bool, False),
 
     # Server
-    ('listen_host',                  str,  '0.0.0.0'),
+    # Loopback only; remote peers must be opted into explicitly.
+    ('listen_host',                  str,  '127.0.0.1'),
     ('listen_port',                  int,  19996),
     ('single_tab_mode_default',      bool, False),
     ('new_conn_clears_tab',          bool, False),
@@ -388,7 +389,13 @@ def parse_cmdline(log):
     parser = QCommandLineParser()
     parser.addHelpOption()
     parser.addVersionOption()
-    parser.addPositionalArgument('logfiles', 'Log files to load', '[logfiles...]')
+    parser.addPositionalArgument('logfiles', 'Log files to load ("-" reads standard input)',
+                                 '[logfiles...]')
+    no_server_option = QCommandLineOption(['no-server'],
+                                          'Do not start the server (view files only).')
+    parser.addOption(no_server_option)
+    tab_name_option = QCommandLineOption(['tab-name'], 'Tab name for loaded log files.', 'name')
+    parser.addOption(tab_name_option)
     excluded = ('default_levels_preset', 'default_header_preset', 'cutelog_version')
     spec = [o for o in OPTION_SPEC if o[0] not in excluded]
     for option in spec:
@@ -409,7 +416,9 @@ def parse_cmdline(log):
     logfiles = []
     if parser.positionalArguments():
         logfiles = parser.positionalArguments()
-    return (overrides, logfiles)
+    run_server = not parser.isSet(no_server_option)
+    tab_name = parser.value(tab_name_option) if parser.isSet(tab_name_option) else None
+    return (overrides, logfiles, run_server, tab_name)
 
 init_qt_info()
 ROOT_LOG = init_logging()
